@@ -34,71 +34,84 @@
 </head>
 <body class="antialiased text-gray-800">
 
-    <!-- Firebase SDK Imports and Logic (Minimal setup for Auth) -->
+    <!-- 
+        ================================================================================
+        FIREBASE AUTHENTICATION SCRIPT 
+        This section initializes Firebase Auth and handles user login/logout states.
+        The "Error Initializing Firebase" banner appears if __firebase_config is missing 
+        in the environment, as the API key is required.
+        ================================================================================
+    -->
     <script type="module">
+        // Import necessary Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         
+        // Mandatory environment variables provided by the Canvas runtime
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'atm-ecommerce-default';
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
 
         let auth;
-        let isFirebaseActive = false;
+        let isFirebaseActive = false; // Flag to check if initialization succeeded
         
         try {
-            // Check if config is provided. If not, bypass initialization.
+            // 1. Configuration Check: Fail if Firebase config is empty (missing API key)
             if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
-                 throw new Error("Missing Firebase configuration.");
+                 throw new Error("Missing Firebase configuration (Check __firebase_config).");
             }
             
+            // 2. Initialize Firebase App and Auth Service
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             isFirebaseActive = true;
 
-            // Authentication Initialization
+            // 3. Authentication Flow: Use custom token if available, otherwise sign in anonymously
             const authInit = async () => {
                 const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : '';
                 if (token.length > 0) {
                     try {
                         await signInWithCustomToken(auth, token);
+                        console.log("Signed in with custom token.");
                     } catch (e) {
-                        console.warn("Custom token sign-in failed, anonymous fallback:", e);
+                        console.warn("Custom token sign-in failed, falling back to anonymous:", e);
                         await signInAnonymously(auth);
                     }
                 } else {
                     await signInAnonymously(auth);
+                    console.log("Signed in anonymously.");
                 }
             };
             authInit();
 
-            // --- Auth State Change Listener ---
+            // 4. Auth State Listener: Update UI whenever the user's login state changes
             onAuthStateChanged(auth, (user) => {
                 const loginButton = document.getElementById('login-btn');
                 const authError = document.getElementById('auth-error-message');
                 
                 if (user && !user.isAnonymous) {
+                    // User is logged in (Google, Email, etc.)
                     const userName = user.displayName || user.email || 'User';
                     loginButton.innerHTML = `<span data-lucide="user" class="w-4 h-4"></span> ${userName.split(' ')[0]}`;
                     loginButton.classList.remove('bg-white', 'text-blue-600', 'hover:text-blue-500');
                     loginButton.classList.add('bg-gray-100', 'text-gray-700', 'border', 'border-gray-300');
-                    
                     authError.classList.add('hidden');
 
                 } else {
+                    // User is anonymous or logged out
                     loginButton.innerHTML = `<span data-lucide="log-in" class="w-4 h-4"></span> Login`;
                     loginButton.classList.remove('bg-gray-100', 'text-gray-700', 'border', 'border-gray-300');
                     loginButton.classList.add('bg-white', 'text-blue-600', 'hover:text-blue-500');
                     
-                    if (!user) {
-                         // Only show the message if Firebase was explicitly initialized but found no user
+                    if (!user && isFirebaseActive) {
+                         // Show message only if initialization passed but no user found (e.g., initial anonymous sign-in failed)
                          authError.classList.remove('hidden');
                          authError.textContent = 'Please log in to track orders.';
                     }
                 }
-                lucide.createIcons();
+                lucide.createIcons(); // Re-render icons after DOM updates
             });
 
-            // --- Global Auth Functions ---
+            // 5. Global Authentication Handlers
             window.auth = auth;
             
             window.handleGoogleLogin = async () => {
@@ -122,16 +135,16 @@
             };
 
         } catch (e) {
+            // 6. Initialization Failure: Display error banner
             console.error("Firebase initialization skipped:", e.message);
-            // Show a specific UI message if Firebase could not initialize due to environment issues
             document.getElementById('firebase-status-banner').classList.remove('hidden');
         }
 
-        // --- UI Logic ---
-
-        // Auth Modal Logic
+        // 7. UI Logic: Controls the visibility of the login modal
         window.toggleAuthModal = (show) => {
+            // Prevent modal opening if Firebase is not active
             if (!isFirebaseActive) {
+                // Using alert() to give immediate feedback about the disabled state
                 alert("Login functionality is disabled because Firebase could not initialize. Please ensure the required environment variables are set.");
                 return;
             }
@@ -141,7 +154,7 @@
                 document.body.style.overflow = 'hidden';
             } else {
                 modal.classList.add('hidden');
-                document.getElementById('auth-error').textContent = '';
+                // document.getElementById('auth-error').textContent = ''; // Clear error on close
                 document.body.style.overflow = 'auto';
             }
         };
