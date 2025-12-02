@@ -3,17 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anuj Techmart (ATM) - Headphone Details</title>
-    <!-- Load Tailwind CSS -->
+    <title>ATM Pro Headphones - Buy Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Set Inter as the primary font -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f4f4f5; /* Light background for a clean look */
+            /* Use a very light gray background for the overall page */
+            background-color: #f0f0f0; 
         }
         /* Custom scrollbar for a smoother look */
         ::-webkit-scrollbar {
@@ -26,29 +24,53 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #777;
         }
-        /* Style the Cashfree button wrapper to be responsive */
+
+        /* --- Custom Styles for eCommerce UI --- */
+
+        /* Style for the review stars */
+        .star-rating {
+            color: #FFC300; /* Use a distinct gold/yellow for stars */
+        }
+        
+        /* Make the Add to Cart/Buy Now bar stick to the bottom on mobile */
+        @media (max-width: 768px) {
+            #mobile-action-bar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                z-index: 30;
+                max-width: 100vw;
+            }
+        }
+
+        /* Enforce image height for a consistent look in the gallery */
+        #main-image {
+            max-height: 500px;
+            width: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+        
+        /* Thumbnail image hover effect */
+        .thumbnail:hover {
+            opacity: 0.8;
+            cursor: pointer;
+        }
+
+        /* Cashfree Button Styles (improved for professionalism) */
         #cashfree-button-container a {
             display: block;
             width: 100%;
             text-decoration: none;
         }
-        /* Custom styles for the COD button */
-        .cod-button {
-            border: 2px solid #000;
-            background-color: #fff;
-            color: #000;
-            transition: all 0.2s;
-        }
-        .cod-button:hover {
-            background-color: #e5e7eb;
-        }
-        /* Cashfree Button Styles (from user provided code) */
         .button-container {
-            border: 1px solid black;
-            border-radius: 15px;
+            border: 1px solid #000;
+            border-radius: 6px; /* Slightly more subtle than 15px */
             display: flex;
             padding: 10px;
-            width: 100%; /* Make it take full width */
+            width: 100%;
             cursor: pointer;
             justify-content: center;
             align-items: center;
@@ -59,47 +81,43 @@
             align-items: center;
             margin-left: 10px;
             justify-content: center;
-            margin-right: 10px;
         }
         .logo-container {
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
         }
         .seconday-logo-container {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             vertical-align: middle;
         }
-        /* Style for the review stars */
-        .star-rating {
-            color: gold;
-        }
+        
     </style>
 </head>
 <body class="antialiased text-gray-800">
 
-    <!-- Firebase SDK Imports and Logic -->
     <script type="module">
+        // Import all required Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // IMPORTANT: Use the global environment variables for initialization
+        // NOTE: Firestore is NOT imported as it's not strictly necessary for UI/login
+        
+        // --- Firebase Initialization and Auth Logic (Minimal for low-burden context) ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'anuj-techmart-default';
-        // Note: Using an empty object as a fallback for the configuration if not provided
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
 
-        // Initialize Firebase
-        let app, auth;
+        let auth;
         
-        // This is a minimal implementation to adhere to the low-burden requirement
-        // We initialize auth but skip Firestore (db) access until explicitly needed for orders.
         try {
-            app = initializeApp(firebaseConfig);
+            // Check if config is actually provided
+            if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
+                 throw new Error("Firebase config is missing or invalid.");
+            }
+            
+            const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
-            setLogLevel('debug'); // Enable debug logging
 
-            // Initial authentication using the custom token
+            // Authentication Initialization
             const authInit = async () => {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token.length > 0) {
                     try {
@@ -114,23 +132,20 @@
             };
             authInit();
 
-
             // --- Auth State Change Listener ---
             onAuthStateChanged(auth, (user) => {
                 const loginButton = document.getElementById('login-btn');
-                const userGreeting = document.getElementById('user-greeting');
-                const userProfileText = document.getElementById('user-profile-text');
                 
-                // Update UI based on user state
                 if (user && !user.isAnonymous) {
-                    const userName = user.displayName || user.email || 'ATM User';
+                    const userName = user.displayName || user.email || 'User';
                     
-                    loginButton.innerHTML = `<span data-lucide="user" class="w-4 h-4"></span> ${userName}`;
-                    loginButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    // Professional UI Update: Show User Name on Header
+                    loginButton.innerHTML = `<span data-lucide="user" class="w-4 h-4"></span> ${userName.split(' ')[0]}`;
+                    loginButton.classList.remove('bg-blue-500', 'hover:bg-blue-600', 'text-white');
                     loginButton.classList.add('bg-gray-100', 'text-gray-700', 'border', 'border-gray-300', 'hover:bg-gray-200');
 
-                    userGreeting.textContent = `Welcome back, ${userName}!`;
-                    userProfileText.innerHTML = `
+                    document.getElementById('user-greeting').textContent = `Welcome back, ${userName}!`;
+                    document.getElementById('user-profile-text').innerHTML = `
                         <p class="text-sm font-semibold">User ID:</p>
                         <p class="break-all text-xs text-gray-500">${user.uid}</p>
                         ${user.email ? `<p class="mt-2 text-sm font-semibold">Email:</p><p class="text-xs text-gray-500">${user.email}</p>` : ''}
@@ -139,12 +154,12 @@
 
                 } else {
                     // User is logged out or anonymous
-                    loginButton.innerHTML = `<span data-lucide="log-in" class="w-4 h-4"></span> Login / Sign Up`;
+                    loginButton.innerHTML = `<span data-lucide="log-in" class="w-4 h-4"></span> Login`;
                     loginButton.classList.remove('bg-gray-100', 'text-gray-700', 'border', 'border-gray-300', 'hover:bg-gray-200');
-                    loginButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                    loginButton.classList.add('bg-blue-500', 'hover:bg-blue-600', 'text-white');
                     
-                    userGreeting.textContent = 'Welcome to Anuj Techmart!';
-                    userProfileText.innerHTML = '<p class="text-sm text-gray-500">Sign in to track orders and save preferences.</p>';
+                    document.getElementById('user-greeting').textContent = 'Welcome to Anuj Techmart!';
+                    document.getElementById('user-profile-text').innerHTML = '<p class="text-sm text-gray-500">Sign in to track orders and save preferences.</p>';
                     document.getElementById('logout-section').classList.add('hidden');
                 }
                 lucide.createIcons();
@@ -178,86 +193,79 @@
             console.error("Firebase initialization failed:", e);
             // Fallback UI message if Firebase cannot initialize
             const fallbackHTML = `
-                <div class="p-4 text-red-600 bg-red-100 border border-red-300 rounded-lg max-w-xl mx-auto m-4">
+                <div class="p-3 text-red-700 bg-red-100 border border-red-300 rounded-lg max-w-7xl mx-auto mt-4">
                     <p class="font-bold">Error Initializing Firebase</p>
-                    <p class="text-sm">Login functionality is disabled.</p>
+                    <p class="text-sm">Login functionality is currently unavailable.</p>
                 </div>`;
             document.body.insertAdjacentHTML('afterbegin', fallbackHTML);
         }
 
-        // --- Application Logic (Carousel, Modals) ---
+        // --- Application Logic (Image Gallery, Modals) ---
 
-        // Carousel State and Logic
         const productImages = [
-            'images/headphone.jpg', // Main image
+            'https://placehold.co/600x400/000000/ffffff?text=ATM+Headphone+Main', // Main image
             'https://placehold.co/600x400/3B82F6/ffffff?text=Close-up+Detail',
             'https://placehold.co/600x400/10B981/ffffff?text=Ergonomics+View',
             'https://placehold.co/600x400/F59E0B/ffffff?text=Carrying+Case',
             'https://placehold.co/600x400/EF4444/ffffff?text=Charging+Cable',
         ];
-        let currentImageIndex = 0;
-
-        window.updateCarousel = (index = currentImageIndex) => {
-            const carousel = document.getElementById('image-carousel');
-            const indicatorContainer = document.getElementById('carousel-indicators');
-            
-            if (!carousel || !indicatorContainer) return;
-
-            // Ensure index wraps around
-            currentImageIndex = (index + productImages.length) % productImages.length;
-
-            // Update transform
-            const offset = -currentImageIndex * 100;
-            carousel.style.transform = `translateX(${offset}%)`;
-
-            // Update indicators
-            indicatorContainer.innerHTML = productImages.map((_, i) => `
-                <button onclick="window.updateCarousel(${i})" 
-                        class="w-2.5 h-2.5 rounded-full mx-1 transition-colors ${i === currentImageIndex ? 'bg-gray-800' : 'bg-gray-400'}">
-                </button>
-            `).join('');
-        };
         
-        window.nextImage = () => window.updateCarousel(currentImageIndex + 1);
-        window.prevImage = () => window.updateCarousel(currentImageIndex - 1);
+        // Use a single main image viewer with thumbnails, like Flipkart
+        window.updateMainImage = (index) => {
+            const mainImageEl = document.getElementById('main-image');
+            const thumbnails = document.querySelectorAll('.thumbnail');
 
+            if (!mainImageEl) return;
+
+            // Update main image source
+            mainImageEl.src = productImages[index];
+
+            // Update active thumbnail border
+            thumbnails.forEach((thumb, i) => {
+                if (i === index) {
+                    thumb.classList.add('ring-2', 'ring-blue-600', 'ring-offset-2');
+                } else {
+                    thumb.classList.remove('ring-2', 'ring-blue-600', 'ring-offset-2');
+                }
+            });
+        };
 
         // Color Selector Logic
         window.selectColor = (color) => {
             document.querySelectorAll('.color-option').forEach(el => {
-                el.classList.remove('ring-4', 'ring-offset-2', 'ring-blue-500');
+                el.classList.remove('ring-4', 'ring-offset-2', 'ring-blue-600');
             });
-            document.getElementById(`color-${color}`).classList.add('ring-4', 'ring-offset-2', 'ring-blue-500');
+            document.getElementById(`color-${color}`).classList.add('ring-4', 'ring-offset-2', 'ring-blue-600');
         };
-
 
         // Auth Modal Logic
         window.toggleAuthModal = (show) => {
             const modal = document.getElementById('auth-modal');
             if (show) {
                 modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Prevent scrolling underneath
             } else {
                 modal.classList.add('hidden');
                 document.getElementById('auth-error').textContent = '';
+                document.body.style.overflow = 'auto';
             }
         };
 
         // Initialize on load
         window.addEventListener('load', () => {
-            // Populate the carousel initially
-            const carousel = document.getElementById('image-carousel');
-            if (carousel) {
-                carousel.innerHTML = productImages.map(url => `
-                    <div class="w-full flex-shrink-0">
-                        <img src="${url}" alt="Product image ${url}" 
-                             onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/333333?text=Image+Not+Found'"
-                             class="w-full h-auto object-cover max-h-80 md:max-h-96">
-                    </div>
-                `).join('');
-                window.updateCarousel(0); // Initialize carousel display
+            // Populate the thumbnails initially
+            const thumbnailContainer = document.getElementById('thumbnail-container');
+            if (thumbnailContainer) {
+                 thumbnailContainer.innerHTML = productImages.map((url, i) => `
+                    <img src="${url}" alt="Thumbnail ${i+1}" 
+                         onclick="window.updateMainImage(${i})"
+                         onerror="this.onerror=null;this.src='https://placehold.co/50x50/cccccc/333333?text=Thumb'"
+                         class="thumbnail w-16 h-16 object-cover border border-gray-200 rounded-md transition duration-150">
+                 `).join('');
             }
             
-            // Set default color selection
+            // Set default image and color selection
+            if(productImages.length > 0) window.updateMainImage(0);
             window.selectColor('black');
 
             // Create Lucide Icons
@@ -267,177 +275,216 @@
     </script>
 
 
-    <!-- --- Main Content Container --- -->
-    <div class="max-w-xl mx-auto bg-white shadow-xl min-h-screen">
+    <div class="min-h-screen">
 
-        <!-- 1. Header & Navigation (Mobile Friendly) -->
-        <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm p-4 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <!-- Logo: uses the provided path, with a placeholder fallback -->
-                <img src="images/atm.jpg" alt="Anuj Techmart Logo" onerror="this.onerror=null;this.src='https://placehold.co/40x40/000000/FFFFFF?text=ATM'" class="w-10 h-10 rounded-full border border-gray-300">
-                <h1 class="text-xl font-bold text-gray-900 tracking-tight">Anuj Techmart</h1>
+        <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-md p-4 flex justify-center">
+            <div class="flex justify-between items-center w-full max-w-7xl mx-auto">
+                <div class="flex items-center space-x-3">
+                    <img src="images/atm.jpg" alt="Anuj Techmart Logo" onerror="this.onerror=null;this.src='https://placehold.co/40x40/004080/FFFFFF?text=ATM'" class="w-10 h-10 rounded-full border border-gray-300">
+                    <h1 class="text-2xl font-extrabold text-blue-800 tracking-wider">ANUJ TECHMART</h1>
+                </div>
+                
+                <div class="hidden md:flex flex-1 mx-8 max-w-2xl">
+                    <input type="search" placeholder="Search for products, brands and more..."
+                           class="w-full p-2 border border-gray-300 rounded-l-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                    <button class="bg-blue-600 text-white p-2.5 rounded-r-md hover:bg-blue-700 transition">
+                        <span data-lucide="search" class="w-5 h-5"></span>
+                    </button>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="login-btn" onclick="window.toggleAuthModal(true)" 
+                            class="flex items-center space-x-1 px-3 py-2 text-sm font-semibold rounded-lg transition duration-150 ease-in-out bg-blue-500 text-white hover:bg-blue-600 shadow-sm">
+                        <span data-lucide="log-in" class="w-4 h-4"></span>
+                        <span>Login</span>
+                    </button>
+                    <button class="p-2 text-gray-700 hover:text-blue-600 transition duration-150 relative">
+                        <span data-lucide="shopping-cart" class="w-6 h-6"></span>
+                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">1</span>
+                    </button>
+                </div>
             </div>
-            
-            <!-- User Profile/Login Button -->
-            <button id="login-btn" onclick="window.toggleAuthModal(true)" 
-                    class="flex items-center space-x-1 px-3 py-2 text-sm font-semibold rounded-full transition duration-150 ease-in-out shadow-md bg-blue-500 text-white hover:bg-blue-600">
-                <span data-lucide="log-in" class="w-4 h-4"></span>
-                <span>Login / Sign Up</span>
-            </button>
         </header>
 
-        <!-- Product Container -->
-        <main id="product-container" class="p-4 sm:p-6 pb-20">
-            
-            <!-- 2. Product Carousel -->
-            <div class="relative mb-6 rounded-xl overflow-hidden shadow-2xl bg-gray-100">
-                <div id="image-carousel" class="flex transition-transform duration-500 ease-in-out">
-                    <!-- Images will be dynamically inserted by JS on load -->
-                </div>
+        <main class="w-full max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-10">
                 
-                <!-- Carousel Navigation -->
-                <button onclick="window.prevImage()" class="absolute top-1/2 left-2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-75 transition">
-                    <span data-lucide="chevron-left" class="w-6 h-6"></span>
-                </button>
-                <button onclick="window.nextImage()" class="absolute top-1/2 right-2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-75 transition">
-                    <span data-lucide="chevron-right" class="w-6 h-6"></span>
-                </button>
+                <div class="md:col-span-5 bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+                    <div id="thumbnail-container" class="hidden md:flex space-x-3 mb-4 overflow-x-auto p-1">
+                        </div>
 
-                <!-- Indicators -->
-                <div id="carousel-indicators" class="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex">
-                    <!-- Indicators will be dynamically inserted by JS -->
-                </div>
-            </div>
-
-            <!-- 3. Product Details (Headphone) -->
-            <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-100">
-                <h2 class="text-2xl font-bold text-gray-900 mb-1">ATM X-Series Pro Wireless Headphones</h2>
-                
-                <!-- Rating and Reviews Summary -->
-                <div class="flex items-center space-x-2 mb-4">
-                    <div class="flex text-lg star-rating">
-                        <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9734;</span>
-                    </div>
-                    <span class="text-sm font-semibold text-gray-700">4.1 / 5</span>
-                    <span class="text-sm text-blue-600 hover:text-blue-800 cursor-pointer hover:underline" onclick="document.getElementById('reviews-section').scrollIntoView({ behavior: 'smooth' });">(1,245 Ratings)</span>
-                </div>
-
-                <!-- Price and Availability -->
-                <div class="mb-4">
-                    <p class="text-3xl font-extrabold text-red-600 inline-block mr-2">₹1,999</p>
-                    <span class="text-base text-gray-500 line-through">₹4,999</span>
-                    <span class="text-lg font-semibold text-green-600 ml-2">(60% Off)</span>
-                    <p class="text-sm text-green-700 font-medium mt-1">In Stock - Delivered in 3-5 days</p>
-                </div>
-
-                <!-- 4. Color Selection -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Color:</label>
-                    <div class="flex space-x-4">
-                        <button id="color-black" onclick="window.selectColor('black')" 
-                                class="color-option w-8 h-8 rounded-full bg-black shadow-lg transition transform hover:scale-110 duration-200 focus:outline-none ring-4 ring-offset-2 ring-blue-500" title="Black"></button>
-                        <button id="color-white" onclick="window.selectColor('white')" 
-                                class="color-option w-8 h-8 rounded-full bg-white shadow-lg border border-gray-300 transition transform hover:scale-110 duration-200 focus:outline-none" title="White"></button>
-                        <button id="color-red" onclick="window.selectColor('red')" 
-                                class="color-option w-8 h-8 rounded-full bg-red-600 shadow-lg transition transform hover:scale-110 duration-200 focus:outline-none" title="Red"></button>
-                        <button id="color-blue" onclick="window.selectColor('blue')" 
-                                class="color-option w-8 h-8 rounded-full bg-blue-600 shadow-lg transition transform hover:scale-110 duration-200 focus:outline-none" title="Blue"></button>
-                    </div>
-                </div>
-
-                <!-- 5. Payment Options & Buttons -->
-                <div class="flex flex-col space-y-3">
-                    <!-- Cashfree Pay Now Button -->
-                    <div id="cashfree-button-container">
-                        <a href="https://payments.cashfree.com/forms/Anuj_tech_mart" target="_blank" rel="noopener noreferrer">
-                            <div class="button-container" style="background: #000">
-                                <div>
-                                    <img src="https://cashfree-checkoutcartimages-prod.cashfree.com/atmZ9in2akeeeu0_prod.png" alt="logo" class="logo-container">
-                                </div>
-                                <div class="text-container">
-                                    <div style="font-family: Arial; color: #fff; margin-bottom: 5px; font-size: 14px; font-weight: bold;">
-                                        Pay Online Now
-                                    </div>
-                                    <div style="font-family: Arial; color: #fff; font-size: 10px;">
-                                        <span>Powered By Cashfree</span>
-                                        <img src="https://cashfreelogo.cashfree.com/cashfreepayments/logosvgs/Group_4355.svg" alt="logo" class="seconday-logo-container">
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
+                    <div class="relative rounded-xl overflow-hidden bg-gray-100 border border-gray-200 shadow-inner">
+                        <img id="main-image" src="" alt="ATM X-Series Pro Wireless Headphones" 
+                             onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/333333?text=Image+Not+Found'"
+                             class="mx-auto block">
                     </div>
                     
-                    <!-- Cash on Delivery Button (Placeholder for an action) -->
-                    <button class="cod-button w-full py-3 text-lg font-bold rounded-xl shadow-md transition duration-150 ease-in-out flex items-center justify-center space-x-2">
-                        <span data-lucide="package" class="w-5 h-5"></span>
-                        <span>Cash on Delivery (COD)</span>
+                    <div class="md:hidden mt-4 flex justify-between space-x-3">
+                         <button class="w-1/2 bg-white text-gray-800 border border-gray-300 py-3 rounded-lg font-bold text-base shadow-sm hover:bg-gray-100 transition duration-150 ease-in-out flex items-center justify-center space-x-2">
+                            <span data-lucide="heart" class="w-5 h-5"></span>
+                            <span>Wishlist</span>
+                        </button>
+                        <button class="w-1/2 bg-yellow-500 text-white py-3 rounded-lg font-bold text-base shadow-md hover:bg-yellow-600 transition duration-150 ease-in-out flex items-center justify-center space-x-2">
+                            <span data-lucide="shopping-cart" class="w-5 h-5"></span>
+                            <span>Add to Cart</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="md:col-span-7 space-y-6">
+                    
+                    <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+                        <span class="text-sm font-medium text-gray-500">ATM X-Series</span>
+                        <h2 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">ATM X-Series Pro Wireless Headphones (Active Noise Cancellation)</h2>
+                        
+                        <div class="flex items-center space-x-2 border-b pb-3 mb-3">
+                            <div class="flex items-center bg-green-700 text-white px-2 py-0.5 rounded-md font-bold text-sm space-x-1">
+                                <span>4.1</span>
+                                <span>&#9733;</span>
+                            </div>
+                            <span class="text-sm text-gray-500 font-medium">(1,245 Ratings & 180 Reviews)</span>
+                        </div>
+
+                        <div class="mb-4">
+                            <p class="text-4xl font-extrabold text-gray-900 inline-block mr-3">₹1,999</p>
+                            <span class="text-xl text-gray-500 line-through">₹4,999</span>
+                            <span class="text-xl font-bold text-green-700 ml-3">60% Off</span>
+                            <p class="text-sm text-gray-500 mt-1">Inclusive of all taxes</p>
+                            <p class="text-base font-semibold text-blue-600 mt-2">Free Delivery</p>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h3 class="text-base font-semibold mb-2">Key Features</h3>
+                            <ul class="space-y-1 text-sm text-gray-700">
+                                <li class="flex items-center"><span data-lucide="check-circle" class="w-4 h-4 text-green-500 mr-2"></span> Industry-leading **Active Noise Cancellation**</li>
+                                <li class="flex items-center"><span data-lucide="check-circle" class="w-4 h-4 text-green-500 mr-2"></span> Up to **40 Hours** of Playtime</li>
+                                <li class="flex items-center"><span data-lucide="check-circle" class="w-4 h-4 text-green-500 mr-2"></span> Bluetooth 5.2 and Voice Assistant Support</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+                        <label class="block text-lg font-bold text-gray-900 mb-3">Available Colors</label>
+                        <div class="flex space-x-4">
+                            <button id="color-black" onclick="window.selectColor('black')" 
+                                    class="color-option w-10 h-10 rounded-full bg-black shadow-lg transition transform hover:scale-105 duration-200 focus:outline-none ring-4 ring-offset-2 ring-blue-600" title="Black"></button>
+                            <button id="color-white" onclick="window.selectColor('white')" 
+                                    class="color-option w-10 h-10 rounded-full bg-white shadow-lg border border-gray-300 transition transform hover:scale-105 duration-200 focus:outline-none" title="White"></button>
+                            <button id="color-red" onclick="window.selectColor('red')" 
+                                    class="color-option w-10 h-10 rounded-full bg-red-600 shadow-lg transition transform hover:scale-105 duration-200 focus:outline-none" title="Red"></button>
+                            <button id="color-blue" onclick="window.selectColor('blue')" 
+                                    class="color-option w-10 h-10 rounded-full bg-blue-600 shadow-lg transition transform hover:scale-105 duration-200 focus:outline-none" title="Blue"></button>
+                        </div>
+                    </div>
+
+                    <div class="hidden md:block bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+                        <h3 class="text-lg font-bold mb-3">Place Your Order</h3>
+                        <div class="flex flex-col space-y-3">
+                             <div id="cashfree-button-container">
+                                <a href="https://payments.cashfree.com/forms/Anuj_tech_mart" target="_blank" rel="noopener noreferrer">
+                                    <div class="button-container bg-red-600 hover:bg-red-700 transition duration-150 border-red-700">
+                                        <div>
+                                            <img src="https://cashfree-checkoutcartimages-prod.cashfree.com/atmZ9in2akeeeu0_prod.png" alt="logo" class="logo-container">
+                                        </div>
+                                        <div class="text-container">
+                                            <div style="font-family: Inter, Arial; color: #fff; margin-bottom: 3px; font-size: 16px; font-weight: bold;">
+                                                BUY NOW (Pay Online)
+                                            </div>
+                                            <div style="font-family: Inter, Arial; color: #fff; font-size: 10px;">
+                                                <span>Powered By Cashfree</span>
+                                                <img src="https://cashfreelogo.cashfree.com/cashfreepayments/logosvgs/Group_4355.svg" alt="logo" class="seconday-logo-container">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            
+                            <button class="w-full py-3 text-lg font-bold rounded-lg shadow-md transition duration-150 ease-in-out flex items-center justify-center space-x-2 bg-white text-gray-800 border-2 border-gray-300 hover:bg-gray-50">
+                                <span data-lucide="package" class="w-5 h-5"></span>
+                                <span>Cash on Delivery (COD)</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 space-y-6">
+                
+                <div class="p-6 bg-white rounded-xl shadow-lg border border-gray-100">
+                    <h3 class="text-xl font-bold mb-4 border-b pb-2 text-gray-800">Product Description</h3>
+                    <p class="text-base text-gray-700 mb-4 leading-relaxed">
+                        Experience audio nirvana with the **ATM X-Series Pro Wireless Headphones**. Engineered for audiophiles, these headphones feature best-in-class **Active Noise Cancellation (ANC)**, a phenomenal 40-hour battery life, and ultra-soft protein leather earcups for all-day comfort. Perfect for focused work, immersive travel, and rich, detailed music listening. The sleek, foldable design makes them the ultimate travel companion.
+                    </p>
+                    <h4 class="text-lg font-semibold mt-4 mb-2">Technical Specifications:</h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <tbody class="divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-3 py-2 whitespace-nowrap font-medium w-1/3">Driver Size</td>
+                                    <td class="px-3 py-2 whitespace-nowrap">40mm Neodymium</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-3 py-2 whitespace-nowrap font-medium">Connectivity</td>
+                                    <td class="px-3 py-2 whitespace-nowrap">Bluetooth 5.2 / AUX</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-3 py-2 whitespace-nowrap font-medium">Battery Life</td>
+                                    <td class="px-3 py-2 whitespace-nowrap">Up to 40 Hours (ANC Off)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-3 py-2 whitespace-nowrap font-medium">Charging Port</td>
+                                    <td class="px-3 py-2 whitespace-nowrap">USB-C</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="reviews-section" class="p-6 bg-white rounded-xl shadow-lg border border-gray-100">
+                    <h3 class="text-xl font-bold mb-4 border-b pb-2 text-gray-800">Verified Customer Reviews</h3>
+
+                    <div class="border-b pb-4 mb-4">
+                        <div class="flex items-center mb-1">
+                            <div class="flex text-base star-rating">
+                                <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
+                            </div>
+                            <span class="text-sm font-semibold ml-2 text-gray-900">Best ANC in this price range!</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-2">by Rohit K. - <span class="font-medium text-gray-700">Verified Buyer</span></p>
+                        <p class="text-sm text-gray-700">
+                            The sound quality is exceptional for the price. The noise cancellation works wonders on my daily commute. The battery life is also seriously impressive. Highly recommend!
+                        </p>
+                    </div>
+
+                    <div class="border-b pb-4 mb-4">
+                        <div class="flex items-center mb-1">
+                            <div class="flex text-base star-rating">
+                                <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9734;</span>
+                            </div>
+                            <span class="text-sm font-semibold ml-2 text-gray-900">Very comfortable, great for long sessions.</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-2">by Priya S. - <span class="font-medium text-gray-700">Verified Buyer</span></p>
+                        <p class="text-sm text-gray-700">
+                            I wear these for hours while working. The earcups are super comfortable and don't make my ears sore. My only minor complaint is the microphone could be clearer.
+                        </p>
+                    </div>
+                    
+                    <button class="w-full text-center text-blue-600 font-semibold py-2 rounded-lg hover:bg-blue-50 transition duration-150">
+                        View All 1,245 Reviews <span data-lucide="chevron-right" class="w-4 h-4 inline-block ml-1"></span>
                     </button>
                 </div>
             </div>
 
-            <!-- 6. Product Description -->
-            <div class="mt-6 p-4 bg-white rounded-xl shadow-lg border border-gray-100">
-                <h3 class="text-xl font-bold mb-3 border-b pb-2">Product Information</h3>
-                <p class="text-sm text-gray-600 mb-4">
-                    Experience crystal-clear audio with the ATM X-Series Pro Wireless Headphones. Engineered for audiophiles, these headphones feature **Active Noise Cancellation (ANC)**, 40-hour battery life, and ultra-soft protein leather earcups for all-day comfort. Perfect for work, travel, and immersive listening.
-                </p>
-                <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-                    <li>40mm High-Fidelity Drivers</li>
-                    <li>Industry-leading Active Noise Cancellation</li>
-                    <li>Bluetooth 5.2 with instant pairing</li>
-                    <li>Up to 40 hours playtime on a single charge</li>
-                    <li>Voice Assistant integration (Siri, Google Assistant)</li>
-                </ul>
-            </div>
-
-            <!-- 7. Customer Reviews Section -->
-            <div id="reviews-section" class="mt-6 p-4 bg-white rounded-xl shadow-lg border border-gray-100">
-                <h3 class="text-xl font-bold mb-4 border-b pb-2">Verified Customer Reviews</h3>
-
-                <!-- Review 1 -->
-                <div class="border-b pb-4 mb-4">
-                    <div class="flex items-center mb-1">
-                        <div class="flex text-base star-rating">
-                            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
-                        </div>
-                        <span class="text-sm font-semibold ml-2 text-gray-900">Best ANC in this price range!</span>
-                    </div>
-                    <p class="text-xs text-gray-500 mb-2">by Rohit K. - Purchased Black, 2 weeks ago</p>
-                    <p class="text-sm text-gray-700">
-                        The sound quality is exceptional for the price. The noise cancellation works wonders on my daily commute. The battery life is also seriously impressive. Highly recommend!
-                    </p>
-                </div>
-
-                <!-- Review 2 -->
-                <div class="border-b pb-4 mb-4">
-                    <div class="flex items-center mb-1">
-                        <div class="flex text-base star-rating">
-                            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9734;</span>
-                        </div>
-                        <span class="text-sm font-semibold ml-2 text-gray-900">Very comfortable, great for long sessions.</span>
-                    </div>
-                    <p class="text-xs text-gray-500 mb-2">by Priya S. - Purchased White, 1 month ago</p>
-                    <p class="text-sm text-gray-700">
-                        I wear these for hours while working. The earcups are super comfortable and don't make my ears sore. My only minor complaint is the microphone could be clearer.
-                    </p>
-                </div>
-                
-                <button class="w-full text-center text-blue-600 font-semibold py-2 rounded-lg hover:bg-blue-50 transition duration-150">
-                    See All 1,245 Reviews
-                </button>
-            </div>
         </main>
 
-        <!-- Fixed Footer/Action Bar (Mobile Focus) -->
-        <footer class="fixed bottom-0 left-0 right-0 max-w-xl mx-auto bg-white border-t border-gray-200 shadow-2xl p-3 z-30">
+
+        <footer id="mobile-action-bar" class="md:hidden bg-white border-t border-gray-200 shadow-2xl p-3">
             <div class="flex justify-between items-center space-x-3">
-                <div class="flex flex-col items-center justify-center w-1/4">
-                    <button class="p-2 text-gray-700 hover:text-red-500 transition duration-150 rounded-full bg-gray-100 hover:bg-red-50">
-                        <span data-lucide="heart" class="w-6 h-6"></span>
-                    </button>
-                    <span class="text-xs mt-1 text-gray-500">Wishlist</span>
-                </div>
-                <button class="w-3/4 bg-red-600 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:bg-red-700 transition duration-150 ease-in-out flex items-center justify-center space-x-2">
+                <button class="w-1/2 bg-white text-gray-800 border border-gray-300 py-3 rounded-lg font-bold text-base shadow-sm hover:bg-gray-100 transition duration-150 ease-in-out flex items-center justify-center space-x-2">
+                    <span data-lucide="heart" class="w-5 h-5"></span>
+                    <span>Wishlist</span>
+                </button>
+                <button class="w-1/2 bg-yellow-500 text-white py-3 rounded-lg font-bold text-base shadow-md hover:bg-yellow-600 transition duration-150 ease-in-out flex items-center justify-center space-x-2">
                     <span data-lucide="shopping-cart" class="w-5 h-5"></span>
                     <span>Add to Cart</span>
                 </button>
@@ -446,7 +493,6 @@
 
     </div>
 
-    <!-- --- Firebase Login/Auth Modal --- -->
     <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden flex items-center justify-center p-4" onclick="window.toggleAuthModal(false)">
         <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm transform transition-all duration-300" onclick="event.stopPropagation()">
             
@@ -460,7 +506,6 @@
                 <p class="text-sm text-gray-500">Sign in to track orders and save preferences.</p>
             </div>
             
-            <!-- Google Login Button -->
             <button onclick="window.handleGoogleLogin()" 
                     class="w-full bg-blue-600 text-white py-3 mb-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition duration-150 ease-in-out flex items-center justify-center space-x-2">
                 <span data-lucide="mail" class="w-5 h-5"></span>
@@ -469,7 +514,6 @@
 
             <div id="auth-error" class="text-red-500 text-center text-sm mb-3 font-medium"></div>
 
-            <!-- Logout Section (Only visible when logged in) -->
             <div id="logout-section" class="mt-4 pt-4 border-t hidden">
                 <button onclick="window.handleLogout()" 
                         class="w-full bg-red-500 text-white py-2 rounded-lg font-semibold shadow-md hover:bg-red-600 transition duration-150 ease-in-out flex items-center justify-center space-x-2">
