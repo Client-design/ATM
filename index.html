@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anuj Techmart (ATM) - Headphone Details</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Set Inter as the primary font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f4f5; /* Light background for a clean look */
+        }
+        /* Custom scrollbar for a smoother look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #999;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+        /* Style the Cashfree button wrapper to be responsive */
+        #cashfree-button-container a {
+            display: block;
+            width: 100%;
+            text-decoration: none;
+        }
+        /* Custom styles for the COD button */
+        .cod-button {
+            border: 2px solid #000;
+            background-color: #fff;
+            color: #000;
+            transition: all 0.2s;
+        }
+        .cod-button:hover {
+            background-color: #e5e7eb;
+        }
+        /* Cashfree Button Styles (from user provided code) */
+        .button-container {
+            border: 1px solid black;
+            border-radius: 15px;
+            display: flex;
+            padding: 10px;
+            width: 100%; /* Make it take full width */
+            cursor: pointer;
+            justify-content: center;
+            align-items: center;
+        }
+        .text-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-left: 10px;
+            justify-content: center;
+            margin-right: 10px;
+        }
+        .logo-container {
+            width: 40px;
+            height: 40px;
+        }
+        .seconday-logo-container {
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+        }
+        /* Style for the review stars */
+        .star-rating {
+            color: gold;
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+
+    <!-- Firebase SDK Imports and Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // IMPORTANT: Use the global environment variables for initialization
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'anuj-techmart-default';
+        // Note: Using an empty object as a fallback for the configuration if not provided
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+        // Initialize Firebase
+        let app, auth;
+        
+        // This is a minimal implementation to adhere to the low-burden requirement
+        // We initialize auth but skip Firestore (db) access until explicitly needed for orders.
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            setLogLevel('debug'); // Enable debug logging
+
+            // Initial authentication using the custom token
+            const authInit = async () => {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token.length > 0) {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (e) {
+                        console.error("Custom token sign-in failed, falling back to anonymous:", e);
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            };
+            authInit();
+
+
+            // --- Auth State Change Listener ---
+            onAuthStateChanged(auth, (user) => {
+                const loginButton = document.getElementById('login-btn');
+                const userGreeting = document.getElementById('user-greeting');
+                const userProfileText = document.getElementById('user-profile-text');
+                
+                // Update UI based on user state
+                if (user && !user.isAnonymous) {
+                    const userName = user.displayName || user.email || 'ATM User';
+                    
+                    loginButton.innerHTML = `<span data-lucide="user" class="w-4 h-4"></span> ${userName}`;
+                    loginButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    loginButton.classList.add('bg-gray-100', 'text-gray-700', 'border', 'border-gray-300', 'hover:bg-gray-200');
+
+                    userGreeting.textContent = `Welcome back, ${userName}!`;
+                    userProfileText.innerHTML = `
+                        <p class="text-sm font-semibold">User ID:</p>
+                        <p class="break-all text-xs text-gray-500">${user.uid}</p>
+                        ${user.email ? `<p class="mt-2 text-sm font-semibold">Email:</p><p class="text-xs text-gray-500">${user.email}</p>` : ''}
+                    `;
+                    document.getElementById('logout-section').classList.remove('hidden');
+
+                } else {
+                    // User is logged out or anonymous
+                    loginButton.innerHTML = `<span data-lucide="log-in" class="w-4 h-4"></span> Login / Sign Up`;
+                    loginButton.classList.remove('bg-gray-100', 'text-gray-700', 'border', 'border-gray-300', 'hover:bg-gray-200');
+                    loginButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                    
+                    userGreeting.textContent = 'Welcome to Anuj Techmart!';
+                    userProfileText.innerHTML = '<p class="text-sm text-gray-500">Sign in to track orders and save preferences.</p>';
+                    document.getElementById('logout-section').classList.add('hidden');
+                }
+                lucide.createIcons();
+            });
+
+            // --- Global Auth Functions ---
+            window.auth = auth;
+            
+            window.handleGoogleLogin = async () => {
+                const provider = new GoogleAuthProvider();
+                try {
+                    await signInWithPopup(auth, provider);
+                    window.toggleAuthModal(false); 
+                    document.getElementById('auth-error').textContent = '';
+                } catch (error) {
+                    console.error("Google sign-in error:", error);
+                    document.getElementById('auth-error').textContent = `Login failed: ${error.message.split('(')[0].trim()}`;
+                }
+            };
+
+            window.handleLogout = async () => {
+                try {
+                    await signOut(auth);
+                    window.toggleAuthModal(false);
+                } catch (error) {
+                    console.error("Logout error:", error);
+                }
+            };
+
+        } catch (e) {
+            console.error("Firebase initialization failed:", e);
+            // Fallback UI message if Firebase cannot initialize
+            const fallbackHTML = `
+                <div class="p-4 text-red-600 bg-red-100 border border-red-300 rounded-lg max-w-xl mx-auto m-4">
+                    <p class="font-bold">Error Initializing Firebase</p>
+                    <p class="text-sm">Login functionality is disabled.</p>
+                </div>`;
+            document.body.insertAdjacentHTML('afterbegin', fallbackHTML);
+        }
+
+        // --- Application Logic (Carousel, Modals) ---
+
+        // Carousel State and Logic
+        const productImages = [
+            'images/headphone.jpg', // Main image
+            'https://placehold.co/600x400/3B82F6/ffffff?text=Close-up+Detail',
+            'https://placehold.co/600x400/10B981/ffffff?text=Ergonomics+View',
+            'https://placehold.co/600x400/F59E0B/ffffff?text=Carrying+Case',
+            'https://placehold.co/600x400/EF4444/ffffff?text=Charging+Cable',
+        ];
+        let currentImageIndex = 0;
+
+        window.updateCarousel = (index = currentImageIndex) => {
+            const carousel = document.getElementById('image-carousel');
+            const indicatorContainer = document.getElementById('carousel-indicators');
+            
+            if (!carousel || !indicatorContainer) return;
+
+            // Ensure index wraps around
+            currentImageIndex = (index + productImages.length) % productImages.length;
+
+            // Update transform
+            const offset = -currentImageIndex * 100;
+            carousel.style.transform = `translateX(${offset}%)`;
+
+            // Update indicators
+            indicatorContainer.innerHTML = productImages.map((_, i) => `
+                <button onclick="window.updateCarousel(${i})" 
+                        class="w-2.5 h-2.5 rounded-full mx-1 transition-colors ${i === currentImageIndex ? 'bg-gray-800' : 'bg-gray-400'}">
+                </button>
+            `).join('');
+        };
+        
+        window.nextImage = () => window.updateCarousel(currentImageIndex + 1);
+        window.prevImage = () => window.updateCarousel(currentImageIndex - 1);
+
+
+        // Color Selector Logic
+        window.selectColor = (color) => {
+            document.querySelectorAll('.color-option').forEach(el => {
+                el.classList.remove('ring-4', 'ring-offset-2', 'ring-blue-500');
+            });
+            document.getElementById(`color-${color}`).classList.add('ring-4', 'ring-offset-2', 'ring-blue-500');
+        };
+
+
+        // Auth Modal Logic
+        window.toggleAuthModal = (show) => {
+            const modal = document.getElementById('auth-modal');
+            if (show) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+                document.getElementById('auth-error').textContent = '';
+            }
+        };
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            // Populate the carousel initially
+            const carousel = document.getElementById('image-carousel');
+            if (carousel) {
+                carousel.innerHTML = productImages.map(url => `
+                    <div class="w-full flex-shrink-0">
+                        <img src="${url}" alt="Product image ${url}" 
+                             onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/333333?text=Image+Not+Found'"
+                             class="w-full h-auto object-cover max-h-80 md:max-h-96">
+                    </div>
+                `).join('');
+                window.updateCarousel(0); // Initialize carousel display
+            }
+            
+            // Set default color selection
+            window.selectColor('black');
+
+            // Create Lucide Icons
+            lucide.createIcons();
+        });
+
+    </script>
+
+
+    <!-- --- Main Content Container --- -->
+    <div class="max-w-xl mx-auto bg-white shadow-xl min-h-screen">
+
+        <!-- 1. Header & Navigation (Mobile Friendly) -->
+        <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm p-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <!-- Logo: uses the provided path, with a placeholder fallback -->
+                <img src="images/atm.jpg" alt="Anuj Techmart Logo" onerror="this.onerror=null;this.src='https://placehold.co/40x40/000000/FFFFFF?text=ATM'" class="w-10 h-10 rounded-full border border-gray-300">
+                <h1 class="text-xl font-bold text-gray-900 tracking-tight">Anuj Techmart</h1>
+            </div>
+            
+            <!-- User Profile/Login Button -->
+            <button id="login-btn" onclick="window.toggleAuthModal(true)" 
+                    class="flex items-center space-x-1 px-3 py-2 text-sm font-semibold rounded-full transition duration-150 ease-in-out shadow-md bg-blue-500 text-white hover:bg-blue-600">
+                <span data-lucide="log-in" class="w-4 h-4"></span>
+                <span>Login / Sign Up</span>
+            </button>
+        </header>
+
+        <!-- Product Container -->
+        <main id="product-container" class="p-4 sm:p-6 pb-20">
+            
+            <!-- 2. Product Carousel -->
+            <div class="relative mb-6 rounded-xl overflow-hidden shadow-2xl bg-gray-100">
+                <div id="image-carousel" class="flex transition-transform duration-500 ease-in-out">
+                    <!-- Images will be dynamically inserted by JS on load -->
+                </div>
+                
+                <!-- Carousel Navigation -->
+                <button onclick="window.prevImage()" class="absolute top-1/2 left-2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-75 transition">
+                    <span data-lucide="chevron-left" class="w-6 h-6"></span>
+                </button>
+                <button onclick="window.nextImage()" class="absolute top-1/2 right-2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-75 transition">
+                    <span data-lucide="chevron-right" class="w-6 h-6"></span>
+                </button>
+
+                <!-- Indicators -->
+                <div id="carousel-indicators" class="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex">
+                    <!-- Indicators will be dynamically inserted by JS -->
+                </div>
+            </div>
+
+            <!-- 3. Product Details (Headphone) -->
+            <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-900 mb-1">ATM X-Series Pro Wireless Headphones</h2>
+                
+                <!-- Rating and Reviews Summary -->
+                <div class="flex items-center space-x-2 mb-4">
+                    <div class="flex text-lg star-rating">
+                        <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9734;</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-700">4.1 / 5</span>
+                    <span class="text-sm text-blue-600 hover:text-blue-800 cursor-pointer hover:underline" onclick="document.getElementById('reviews-section').scrollIntoView({ behavior: 'smooth' });">(1,245 Ratings)</span>
+                </div>
+
+                <!-- Price and Availability -->
+                <div class="mb-4">
+                    <p class="text-3xl font-extrabold text-red-600 inline-block mr-2">₹1,999</p>
+                    <span class="text-base text-gray-500 line-through">₹4,999</span>
+                    <span class="text-lg font-semibold text-green-600 ml-2">(60% Off)</span>
+                    <p class="text-sm text-green-700 font-medium mt-1">In Stock - Delivered in 3-5 days</p>
+                </div>
+
+                <!-- 4. Color Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Color:</label>
+                    <div class="flex space-x-4">
+                        <button id="color-black" onclick="window.selectColor('black')" 
+                                class="color-option w-8 h-8 rounded-full bg-black shadow-lg transition transform hover:scale-110 duration-200 focus:outline-none ring-4 ring-offset-2 ring-blue-500" title="Black"></button>
+                        <button id="color-white" onclick="window.selectColor('white')" 
+                                class="color-option w-8 h-8 rounded-full bg-white shadow-lg border border-gray-300 transition transform hover:scale-110 duration-200 focus:outline-none" title="White"></button>
+                        <button id="color-red" onclick="window.selectColor('red')" 
+                                class="color-option w-8 h-8 rounded-full bg-red-600 shadow-lg transition transform hover:scale-110 duration-200 focus:outline-none" title="Red"></button>
+                        <button id="color-blue" onclick="window.selectColor('blue')" 
+                                class="color-option w-8 h-8 rounded-full bg-blue-600 shadow-lg transition transform hover:scale-110 duration-200 focus:outline-none" title="Blue"></button>
+                    </div>
+                </div>
+
+                <!-- 5. Payment Options & Buttons -->
+                <div class="flex flex-col space-y-3">
+                    <!-- Cashfree Pay Now Button -->
+                    <div id="cashfree-button-container">
+                        <a href="https://payments.cashfree.com/forms/Anuj_tech_mart" target="_blank" rel="noopener noreferrer">
+                            <div class="button-container" style="background: #000">
+                                <div>
+                                    <img src="https://cashfree-checkoutcartimages-prod.cashfree.com/atmZ9in2akeeeu0_prod.png" alt="logo" class="logo-container">
+                                </div>
+                                <div class="text-container">
+                                    <div style="font-family: Arial; color: #fff; margin-bottom: 5px; font-size: 14px; font-weight: bold;">
+                                        Pay Online Now
+                                    </div>
+                                    <div style="font-family: Arial; color: #fff; font-size: 10px;">
+                                        <span>Powered By Cashfree</span>
+                                        <img src="https://cashfreelogo.cashfree.com/cashfreepayments/logosvgs/Group_4355.svg" alt="logo" class="seconday-logo-container">
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <!-- Cash on Delivery Button (Placeholder for an action) -->
+                    <button class="cod-button w-full py-3 text-lg font-bold rounded-xl shadow-md transition duration-150 ease-in-out flex items-center justify-center space-x-2">
+                        <span data-lucide="package" class="w-5 h-5"></span>
+                        <span>Cash on Delivery (COD)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 6. Product Description -->
+            <div class="mt-6 p-4 bg-white rounded-xl shadow-lg border border-gray-100">
+                <h3 class="text-xl font-bold mb-3 border-b pb-2">Product Information</h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    Experience crystal-clear audio with the ATM X-Series Pro Wireless Headphones. Engineered for audiophiles, these headphones feature **Active Noise Cancellation (ANC)**, 40-hour battery life, and ultra-soft protein leather earcups for all-day comfort. Perfect for work, travel, and immersive listening.
+                </p>
+                <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
+                    <li>40mm High-Fidelity Drivers</li>
+                    <li>Industry-leading Active Noise Cancellation</li>
+                    <li>Bluetooth 5.2 with instant pairing</li>
+                    <li>Up to 40 hours playtime on a single charge</li>
+                    <li>Voice Assistant integration (Siri, Google Assistant)</li>
+                </ul>
+            </div>
+
+            <!-- 7. Customer Reviews Section -->
+            <div id="reviews-section" class="mt-6 p-4 bg-white rounded-xl shadow-lg border border-gray-100">
+                <h3 class="text-xl font-bold mb-4 border-b pb-2">Verified Customer Reviews</h3>
+
+                <!-- Review 1 -->
+                <div class="border-b pb-4 mb-4">
+                    <div class="flex items-center mb-1">
+                        <div class="flex text-base star-rating">
+                            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
+                        </div>
+                        <span class="text-sm font-semibold ml-2 text-gray-900">Best ANC in this price range!</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-2">by Rohit K. - Purchased Black, 2 weeks ago</p>
+                    <p class="text-sm text-gray-700">
+                        The sound quality is exceptional for the price. The noise cancellation works wonders on my daily commute. The battery life is also seriously impressive. Highly recommend!
+                    </p>
+                </div>
+
+                <!-- Review 2 -->
+                <div class="border-b pb-4 mb-4">
+                    <div class="flex items-center mb-1">
+                        <div class="flex text-base star-rating">
+                            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9734;</span>
+                        </div>
+                        <span class="text-sm font-semibold ml-2 text-gray-900">Very comfortable, great for long sessions.</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-2">by Priya S. - Purchased White, 1 month ago</p>
+                    <p class="text-sm text-gray-700">
+                        I wear these for hours while working. The earcups are super comfortable and don't make my ears sore. My only minor complaint is the microphone could be clearer.
+                    </p>
+                </div>
+                
+                <button class="w-full text-center text-blue-600 font-semibold py-2 rounded-lg hover:bg-blue-50 transition duration-150">
+                    See All 1,245 Reviews
+                </button>
+            </div>
+        </main>
+
+        <!-- Fixed Footer/Action Bar (Mobile Focus) -->
+        <footer class="fixed bottom-0 left-0 right-0 max-w-xl mx-auto bg-white border-t border-gray-200 shadow-2xl p-3 z-30">
+            <div class="flex justify-between items-center space-x-3">
+                <div class="flex flex-col items-center justify-center w-1/4">
+                    <button class="p-2 text-gray-700 hover:text-red-500 transition duration-150 rounded-full bg-gray-100 hover:bg-red-50">
+                        <span data-lucide="heart" class="w-6 h-6"></span>
+                    </button>
+                    <span class="text-xs mt-1 text-gray-500">Wishlist</span>
+                </div>
+                <button class="w-3/4 bg-red-600 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:bg-red-700 transition duration-150 ease-in-out flex items-center justify-center space-x-2">
+                    <span data-lucide="shopping-cart" class="w-5 h-5"></span>
+                    <span>Add to Cart</span>
+                </button>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- --- Firebase Login/Auth Modal --- -->
+    <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden flex items-center justify-center p-4" onclick="window.toggleAuthModal(false)">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm transform transition-all duration-300" onclick="event.stopPropagation()">
+            
+            <button onclick="window.toggleAuthModal(false)" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
+                <span data-lucide="x" class="w-6 h-6"></span>
+            </button>
+
+            <h2 id="user-greeting" class="text-2xl font-bold mb-4 text-gray-900">Welcome to Anuj Techmart!</h2>
+
+            <div id="user-profile-text" class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p class="text-sm text-gray-500">Sign in to track orders and save preferences.</p>
+            </div>
+            
+            <!-- Google Login Button -->
+            <button onclick="window.handleGoogleLogin()" 
+                    class="w-full bg-blue-600 text-white py-3 mb-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition duration-150 ease-in-out flex items-center justify-center space-x-2">
+                <span data-lucide="mail" class="w-5 h-5"></span>
+                <span>Continue with Google</span>
+            </button>
+
+            <div id="auth-error" class="text-red-500 text-center text-sm mb-3 font-medium"></div>
+
+            <!-- Logout Section (Only visible when logged in) -->
+            <div id="logout-section" class="mt-4 pt-4 border-t hidden">
+                <button onclick="window.handleLogout()" 
+                        class="w-full bg-red-500 text-white py-2 rounded-lg font-semibold shadow-md hover:bg-red-600 transition duration-150 ease-in-out flex items-center justify-center space-x-2">
+                    <span data-lucide="log-out" class="w-5 h-5"></span>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
