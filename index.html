@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Anuj Tech Mart | Premium Electronics Store</title>
-    
+    <title>Anuj Tech Mart | Authentic Electronics & Gadgets</title>
     <link rel="stylesheet" href="style.css">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 </head>
 <body>
 
@@ -16,7 +15,6 @@
             <div class="logo">
                 <i class="fas fa-bolt" style="color: #febd69;"></i> Anuj Tech Mart
             </div>
-            
             <div class="nav-icons">
                 <div class="cart-icon" onclick="toggleCart()">
                     <i class="fas fa-shopping-cart"></i>
@@ -26,34 +24,61 @@
         </div>
     </header>
 
-    <section class="hero">
-        <div class="container hero-content">
-            <h1>Future Tech, Today.</h1>
-            <p>India's Most Trusted Gadget Store. <br><strong>Cash on Delivery Available.</strong></p>
+    <section class="hero-carousel">
+        <div class="swiper mySwiper">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide" style="background-image: url('https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=1200&q=80');">
+                    <div class="slide-content">
+                        <h1>Future Tech Festival</h1>
+                        <p>Up to 70% OFF on Smart Wearables. Limited Time!</p>
+                        <button class="btn-primary" onclick="scrollToProducts()">Shop Now</button>
+                    </div>
+                </div>
+                <div class="swiper-slide" style="background-image: url('https://images.unsplash.com/photo-1593642634367-d91a135587b5?auto=format&fit=crop&w=1200&q=80');">
+                    <div class="slide-content">
+                        <h1>Lucky Draw Alert!</h1>
+                        <p>Stand a chance to win a free smartwatch with every order.</p>
+                        <button class="btn-primary" onclick="scrollToProducts()">Order Now</button>
+                    </div>
+                </div>
+                <div class="swiper-slide" style="background-image: url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80');">
+                    <div class="slide-content">
+                        <h1>New Arrivals</h1>
+                        <p>Explore the latest in audio and gaming gear.</p>
+                        <button class="btn-primary" onclick="scrollToProducts()">Explore</button>
+                    </div>
+                </div>
+            </div>
+            <div class="swiper-pagination"></div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
         </div>
     </section>
 
     <section class="features">
         <div class="container feature-grid">
             <div class="feature-box">
-                <i class="fas fa-truck-fast"></i>
-                <span>Fast Delivery</span>
+                <i class="fas fa-check-circle"></i>
+                <span>Authentic Products</span>
             </div>
             <div class="feature-box">
                 <i class="fas fa-hand-holding-dollar"></i>
                 <span>Cash On Delivery</span>
             </div>
             <div class="feature-box">
-                <i class="fas fa-shield-halved"></i>
-                <span>1 Year Warranty</span>
+                <i class="fas fa-lock"></i>
+                <span>Secure Payments</span>
+            </div>
+            <div class="feature-box">
+                <i class="fas fa-rotate-left"></i>
+                <span>Easy Returns</span>
             </div>
         </div>
     </section>
 
-    <section class="products-section">
+    <section class="products-section" id="products">
         <div class="container">
             <h2 class="section-title">Trending Now <i class="fas fa-fire" style="color:red;"></i></h2>
-            
             <div id="product-grid" class="product-grid">
                 <p style="text-align:center; width:100%; padding:20px;">Loading Premium Products...</p>
             </div>
@@ -75,7 +100,10 @@
                     <h2 id="modal-title" class="modal-title">Product Name</h2>
                     
                     <div class="rating-badge">
-                        <i class="fas fa-star"></i> 4.8 <span style="color:#777; font-weight:normal;">(Verified Purchase)</span>
+                        <span class="stars-container">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                        </span>
+                        <span style="color:#777; font-weight:normal; margin-left:5px;">4.5 (2,450 Ratings)</span>
                     </div>
                     
                     <div class="price-area">
@@ -94,16 +122,6 @@
                             </div>
                     </div>
 
-                    <div class="review-gallery">
-                        <p><strong>Customer Photos:</strong></p>
-                        <div class="review-imgs">
-                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=100&q=80" alt="Review 1">
-                            <img src="https://images.unsplash.com/photo-1593642532744-d377ab507dc8?auto=format&fit=crop&w=100&q=80" alt="Review 2">
-                            <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=100&q=80" alt="Review 3">
-                            <span style="font-size:0.8rem; align-self:center; color:#555;">+120 more</span>
-                        </div>
-                    </div>
-
                     <div class="modal-actions">
                         <button class="btn-buy-now" onclick="buyNowFromModal()">
                             <i class="fas fa-bolt"></i> Buy Now (Cash On Delivery)
@@ -112,6 +130,42 @@
                     <p style="text-align:center; font-size:0.7rem; color:green; margin-top:5px;">
                         <i class="fas fa-check-circle"></i> In Stock & Ready to Ship
                     </p>
+
+                    <div class="divider"></div>
+
+                    <div class="reviews-container">
+                        <h3>Ratings & Reviews</h3>
+                        <div class="review-item">
+                            <div class="review-header">
+                                <span class="review-stars">4.5 <i class="fas fa-star"></i></span>
+                                <span class="review-title">Excellent Product!</span>
+                            </div>
+                            <p class="review-text">The watch is exactly as described. The display is bright and touch is very smooth. Battery life is also good, lasts about 2 days with heavy use. Delivery was super fast!</p>
+                            <div class="review-images">
+                                <img src="https://images.unsplash.com/photo-1593642532744-d377ab507dc8?auto=format&fit=crop&w=100&q=80" alt="User Review 1">
+                                <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=100&q=80" alt="User Review 2">
+                            </div>
+                            <div class="review-footer">
+                                <span class="reviewer-name">Rahul Kumar <i class="fas fa-check-circle verified-badge"></i> Certified Buyer</span>
+                                <span class="review-date">10 Oct, 2023</span>
+                            </div>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="review-item">
+                            <div class="review-header">
+                                <span class="review-stars" style="background-color: #388e3c;">5 <i class="fas fa-star"></i></span>
+                                <span class="review-title">Value for Money</span>
+                            </div>
+                            <p class="review-text">Best earbuds under this price range. Sound quality is amazing, bass is punchy. ENC works well during calls. The case is compact and premium looking.</p>
+                             <div class="review-images">
+                                <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=100&q=80" alt="User Review 3">
+                            </div>
+                            <div class="review-footer">
+                                <span class="reviewer-name">Amit Singh <i class="fas fa-check-circle verified-badge"></i> Certified Buyer</span>
+                                <span class="review-date">25 Sep, 2023</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -162,10 +216,11 @@
         </div>
     </div>
 
-    <footer style="text-align:center; padding:20px; color:#777; font-size:0.8rem;">
+    <footer style="text-align:center; padding:20px; color:#777; font-size:0.8rem; background: #fff; border-top: 1px solid #eee;">
         <p>&copy; 2025 Anuj Tech Mart. All Rights Reserved.</p>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script type="module" src="script.js"></script>
 
 </body>
