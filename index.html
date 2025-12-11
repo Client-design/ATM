@@ -2,471 +2,171 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATM Mart - E-Commerce Homepage</title>
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Set Inter as the primary font -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f1f3f6; /* Light gray background, typical of e-commerce sites */
-        }
-        /* Custom styles for professional feel */
-        .product-card {
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        .nav-link:hover {
-            color: #2563eb; /* Blue hover for links */
-        }
-        /* Star rating color */
-        .star-rating {
-            color: #FFC300;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Anuj Tech Mart | Premium Electronics Store</title>
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="antialiased text-gray-800">
+<body>
 
-    <!-- 
-        ================================================================================
-        FIREBASE AUTHENTICATION SCRIPT 
-        This section initializes Firebase Auth and handles user login/logout states.
-        The "Error Initializing Firebase" banner appears if __firebase_config is missing 
-        in the environment, as the API key is required.
-        ================================================================================
-    -->
-    <script type="module">
-        // Import necessary Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        
-        // Mandatory environment variables provided by the Canvas runtime
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'atm-ecommerce-default';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-
-        let auth;
-        let isFirebaseActive = false; // Flag to check if initialization succeeded
-        
-        try {
-            // 1. Configuration Check: Fail if Firebase config is empty (missing API key)
-            if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
-                 throw new Error("Missing Firebase configuration (Check __firebase_config).");
-            }
-            
-            // 2. Initialize Firebase App and Auth Service
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            isFirebaseActive = true;
-
-            // 3. Authentication Flow: Use custom token if available, otherwise sign in anonymously
-            const authInit = async () => {
-                const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : '';
-                if (token.length > 0) {
-                    try {
-                        await signInWithCustomToken(auth, token);
-                        console.log("Signed in with custom token.");
-                    } catch (e) {
-                        console.warn("Custom token sign-in failed, falling back to anonymous:", e);
-                        await signInAnonymously(auth);
-                    }
-                } else {
-                    await signInAnonymously(auth);
-                    console.log("Signed in anonymously.");
-                }
-            };
-            authInit();
-
-            // 4. Auth State Listener: Update UI whenever the user's login state changes
-            onAuthStateChanged(auth, (user) => {
-                const loginButton = document.getElementById('login-btn');
-                const authError = document.getElementById('auth-error-message');
-                
-                if (user && !user.isAnonymous) {
-                    // User is logged in (Google, Email, etc.)
-                    const userName = user.displayName || user.email || 'User';
-                    loginButton.innerHTML = `<span data-lucide="user" class="w-4 h-4"></span> ${userName.split(' ')[0]}`;
-                    loginButton.classList.remove('bg-white', 'text-blue-600', 'hover:text-blue-500');
-                    loginButton.classList.add('bg-gray-100', 'text-gray-700', 'border', 'border-gray-300');
-                    authError.classList.add('hidden');
-
-                } else {
-                    // User is anonymous or logged out
-                    loginButton.innerHTML = `<span data-lucide="log-in" class="w-4 h-4"></span> Login`;
-                    loginButton.classList.remove('bg-gray-100', 'text-gray-700', 'border', 'border-gray-300');
-                    loginButton.classList.add('bg-white', 'text-blue-600', 'hover:text-blue-500');
-                    
-                    if (!user && isFirebaseActive) {
-                         // Show message only if initialization passed but no user found (e.g., initial anonymous sign-in failed)
-                         authError.classList.remove('hidden');
-                         authError.textContent = 'Please log in to track orders.';
-                    }
-                }
-                lucide.createIcons(); // Re-render icons after DOM updates
-            });
-
-            // 5. Global Authentication Handlers
-            window.auth = auth;
-            
-            window.handleGoogleLogin = async () => {
-                const provider = new GoogleAuthProvider();
-                try {
-                    await signInWithPopup(auth, provider);
-                    window.toggleAuthModal(false); 
-                } catch (error) {
-                    console.error("Google sign-in error:", error);
-                    document.getElementById('auth-error').textContent = `Login failed: ${error.message.split('(')[0].trim()}`;
-                }
-            };
-
-            window.handleLogout = async () => {
-                try {
-                    await signOut(auth);
-                    window.toggleAuthModal(false);
-                } catch (error) {
-                    console.error("Logout error:", error);
-                }
-            };
-
-        } catch (e) {
-            // 6. Initialization Failure: Display error banner
-            console.error("Firebase initialization skipped:", e.message);
-            document.getElementById('firebase-status-banner').classList.remove('hidden');
-        }
-
-        // 7. UI Logic: Controls the visibility of the login modal
-        window.toggleAuthModal = (show) => {
-            // Prevent modal opening if Firebase is not active
-            if (!isFirebaseActive) {
-                // Using alert() to give immediate feedback about the disabled state
-                alert("Login functionality is disabled because Firebase could not initialize. Please ensure the required environment variables are set.");
-                return;
-            }
-            const modal = document.getElementById('auth-modal');
-            if (show) {
-                modal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            } else {
-                modal.classList.add('hidden');
-                // document.getElementById('auth-error').textContent = ''; // Clear error on close
-                document.body.style.overflow = 'auto';
-            }
-        };
-
-        // Initialize Lucide Icons on load
-        window.addEventListener('load', () => {
-            lucide.createIcons();
-        });
-    </script>
-
-
-    <!-- --- Firebase Status Banner (Top Alert for Dev Environment Issue) --- -->
-    <div id="firebase-status-banner" class="hidden bg-red-600 text-white text-center py-2 text-sm font-medium">
-        <div class="max-w-7xl mx-auto flex items-center justify-center space-x-2">
-            <span data-lucide="alert-triangle" class="w-4 h-4"></span>
-            <span>**Error Initializing Firebase:** Login functionality is disabled.</span>
-        </div>
-    </div>
-
-    <!-- 1. Top Header/Navbar (Fixed, Professional E-Commerce Look) -->
-    <header class="sticky top-0 z-40 bg-white shadow-md">
-        <div class="w-full max-w-7xl mx-auto flex items-center justify-between p-3 md:p-4">
-            <!-- Logo & Brand -->
-            <div class="flex items-center space-x-2">
-                <img src="https://placehold.co/40x40/004080/FFFFFF?text=ATM" alt="ATM Mart Logo" class="w-8 h-8 md:w-10 md:h-10">
-                <h1 class="text-xl md:text-2xl font-extrabold text-blue-800 tracking-wider">ATM Mart</h1>
-            </div>
-
-            <!-- Search Bar (Flexible width) -->
-            <div class="flex-1 max-w-lg mx-4 hidden md:flex rounded-lg overflow-hidden border border-gray-300 shadow-sm">
-                <input type="search" placeholder="Search for products, brands and more..."
-                       class="w-full p-2.5 text-sm focus:outline-none" />
-                <button class="bg-white text-blue-600 p-2.5 hover:bg-gray-100 transition">
-                    <span data-lucide="search" class="w-5 h-5"></span>
-                </button>
+    <header class="navbar">
+        <div class="container nav-content">
+            <div class="logo">
+                <i class="fas fa-bolt" style="color: #febd69;"></i> Anuj Tech Mart
             </div>
             
-            <!-- Actions (Login, Cart) -->
-            <div class="flex items-center space-x-4">
-                <!-- Login/Profile Button -->
-                <button id="login-btn" onclick="window.toggleAuthModal(true)" 
-                        class="flex items-center space-x-1 px-3 py-2 text-sm font-semibold rounded-md transition duration-150 ease-in-out bg-white text-blue-600 hover:text-blue-500 shadow-sm">
-                    <span data-lucide="log-in" class="w-4 h-4"></span>
-                    <span>Login</span>
-                </button>
-                
-                <!-- Cart Icon -->
-                <button class="p-2 text-gray-700 hover:text-blue-600 transition duration-150 relative">
-                    <span data-lucide="shopping-cart" class="w-6 h-6"></span>
-                    <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">1</span>
-                </button>
+            <div class="nav-icons">
+                <div class="cart-icon" onclick="toggleCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-count">0</span>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- 2. Main Navigation/Categories Bar -->
-    <nav class="bg-white shadow-sm border-b border-gray-200">
-        <div class="w-full max-w-7xl mx-auto flex justify-around md:justify-start md:space-x-10 py-3 overflow-x-auto text-sm md:text-base">
-            <a href="#" class="nav-link text-gray-900 font-semibold flex items-center space-x-1 flex-shrink-0">
-                <span data-lucide="home" class="w-5 h-5"></span>
-                <span>Home</span>
-            </a>
-            <a href="#" class="nav-link text-gray-700 hover:text-blue-600 flex items-center space-x-1 flex-shrink-0">
-                <span data-lucide="trending-up" class="w-5 h-5"></span>
-                <span>Trending</span>
-            </a>
-            <a href="#" class="nav-link text-gray-700 hover:text-blue-600 flex items-center space-x-1 flex-shrink-0">
-                <span data-lucide="t-shirt" class="w-5 h-5"></span>
-                <span>Fashion</span>
-            </a>
-            <a href="#" class="nav-link text-gray-700 hover:text-blue-600 flex items-center space-x-1 flex-shrink-0">
-                <span data-lucide="monitor" class="w-5 h-5"></span>
-                <span>Electronics</span>
-            </a>
-            <a href="#" class="nav-link text-gray-700 hover:text-blue-600 flex items-center space-x-1 flex-shrink-0">
-                <span data-lucide="luggage" class="w-5 h-5"></span>
-                <span>Travel</span>
-            </a>
-            <a href="#" class="nav-link text-gray-700 hover:text-blue-600 flex items-center space-x-1 flex-shrink-0">
-                <span data-lucide="soup" class="w-5 h-5"></span>
-                <span>Groceries</span>
-            </a>
+    <section class="hero">
+        <div class="container hero-content">
+            <h1>Future Tech, Today.</h1>
+            <p>India's Most Trusted Gadget Store. <br><strong>Cash on Delivery Available.</strong></p>
         </div>
-    </nav>
+    </section>
 
-    <!-- --- Main Content Area --- -->
-    <main class="w-full max-w-7xl mx-auto p-2 md:p-4 space-y-6">
-
-        <!-- 3. Hero/Banner Section (Carousel Placeholder) -->
-        <section class="bg-white rounded-xl overflow-hidden shadow-lg p-3 md:p-4">
-            <div class="relative h-40 md:h-72 w-full bg-blue-100 rounded-lg overflow-hidden">
-                <img src="https://placehold.co/1200x300/1e40af/ffffff?text=MEGA+SALE+BANNER+-+UP+TO+70%25+OFF" alt="Sale Banner" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-black bg-opacity-10 flex items-center justify-center">
-                    <h2 class="text-white text-3xl md:text-5xl font-extrabold tracking-tight"></h2>
-                </div>
+    <section class="features">
+        <div class="container feature-grid">
+            <div class="feature-box">
+                <i class="fas fa-truck-fast"></i>
+                <span>Fast Delivery</span>
             </div>
-        </section>
-
-        <!-- 4. Trending Products / Best Sellers (Grid Layout) -->
-        <section class="bg-white p-4 md:p-6 rounded-xl shadow-lg">
-            <h2 class="text-xl md:text-2xl font-bold mb-4 text-gray-900 border-b pb-2 flex items-center space-x-2">
-                <span data-lucide="zap" class="w-6 h-6 text-yellow-500"></span>
-                <span>Trending Products</span>
-            </h2>
-
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-                <!-- Product Card Template (Repeated 5 times) -->
-                <div class="product-card bg-white rounded-lg overflow-hidden border border-gray-100 shadow-md cursor-pointer">
-                    <div class="h-32 md:h-40 bg-gray-50 flex items-center justify-center">
-                        <img src="https://placehold.co/150x150/000000/ffffff?text=Headphone" alt="Product 1" class="max-h-full max-w-full object-contain p-2">
-                    </div>
-                    <div class="p-3">
-                        <p class="text-xs text-gray-500 mb-1">ATM X-Series</p>
-                        <h3 class="text-sm md:text-base font-semibold truncate text-gray-800" title="ATM Pro Wireless Headphones">ATM Pro Wireless Headphone</h3>
-                        <div class="flex items-center space-x-1 text-xs star-rating my-1">
-                            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9734;</span>
-                            <span class="text-gray-500 ml-1">(4.1)</span>
-                        </div>
-                        <p class="text-lg font-bold text-gray-900">₹1,999</p>
-                        <p class="text-xs text-green-600 font-medium">60% Off</p>
-                    </div>
-                </div>
-                
-                <div class="product-card bg-white rounded-lg overflow-hidden border border-gray-100 shadow-md cursor-pointer">
-                    <div class="h-32 md:h-40 bg-gray-50 flex items-center justify-center">
-                        <img src="https://placehold.co/150x150/3b82f6/ffffff?text=Smartphone" alt="Product 2" class="max-h-full max-w-full object-contain p-2">
-                    </div>
-                    <div class="p-3">
-                         <p class="text-xs text-gray-500 mb-1">Brand X</p>
-                        <h3 class="text-sm md:text-base font-semibold truncate text-gray-800" title="Ultra Slim 5G Smartphone">Ultra Slim 5G Smartphone</h3>
-                        <div class="flex items-center space-x-1 text-xs star-rating my-1">
-                            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
-                            <span class="text-gray-500 ml-1">(4.8)</span>
-                        </div>
-                        <p class="text-lg font-bold text-gray-900">₹14,999</p>
-                        <p class="text-xs text-green-600 font-medium">10% Off</p>
-                    </div>
-                </div>
-                
-                <div class="product-card bg-white rounded-lg overflow-hidden border border-gray-100 shadow-md cursor-pointer">
-                    <div class="h-32 md:h-40 bg-gray-50 flex items-center justify-center">
-                        <img src="https://placehold.co/150x150/10b981/ffffff?text=Laptop" alt="Product 3" class="max-h-full max-w-full object-contain p-2">
-                    </div>
-                    <div class="p-3">
-                         <p class="text-xs text-gray-500 mb-1">ATM Gear</p>
-                        <h3 class="text-sm md:text-base font-semibold truncate text-gray-800" title="Power Max Laptop i7">Power Max Laptop i7</h3>
-                        <div class="flex items-center space-x-1 text-xs star-rating my-1">
-                            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9734;</span><span>&#9734;</span>
-                            <span class="text-gray-500 ml-1">(3.5)</span>
-                        </div>
-                        <p class="text-lg font-bold text-gray-900">₹45,999</p>
-                        <p class="text-xs text-green-600 font-medium">35% Off</p>
-                    </div>
-                </div>
-
-                <div class="product-card bg-white rounded-lg overflow-hidden border border-gray-100 shadow-md cursor-pointer hidden sm:block">
-                    <div class="h-32 md:h-40 bg-gray-50 flex items-center justify-center">
-                        <img src="https://placehold.co/150x150/ef4444/ffffff?text=Watch" alt="Product 4" class="max-h-full max-w-full object-contain p-2">
-                    </div>
-                    <div class="p-3">
-                        <p class="text-xs text-gray-500 mb-1">Smart Gear</p>
-                        <h3 class="text-sm md:text-base font-semibold truncate text-gray-800" title="Fitness Tracker Smartwatch">Fitness Tracker Smartwatch</h3>
-                        <div class="flex items-center space-x-1 text-xs star-rating my-1">
-                            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9734;</span>
-                            <span class="text-gray-500 ml-1">(4.3)</span>
-                        </div>
-                        <p class="text-lg font-bold text-gray-900">₹2,499</p>
-                        <p class="text-xs text-green-600 font-medium">20% Off</p>
-                    </div>
-                </div>
-
-                <div class="product-card bg-white rounded-lg overflow-hidden border border-gray-100 shadow-md cursor-pointer hidden lg:block">
-                    <div class="h-32 md:h-40 bg-gray-50 flex items-center justify-center">
-                        <img src="https://placehold.co/150x150/f97316/ffffff?text=Camera" alt="Product 5" class="max-h-full max-w-full object-contain p-2">
-                    </div>
-                    <div class="p-3">
-                         <p class="text-xs text-gray-500 mb-1">Pro Optics</p>
-                        <h3 class="text-sm md:text-base font-semibold truncate text-gray-800" title="Digital SLR Camera Kit">Digital SLR Camera Kit</h3>
-                        <div class="flex items-center space-x-1 text-xs star-rating my-1">
-                            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
-                            <span class="text-gray-500 ml-1">(4.9)</span>
-                        </div>
-                        <p class="text-lg font-bold text-gray-900">₹89,999</p>
-                        <p class="text-xs text-green-600 font-medium">15% Off</p>
-                    </div>
-                </div>
-                <!-- End Product Card Template -->
+            <div class="feature-box">
+                <i class="fas fa-hand-holding-dollar"></i>
+                <span>Cash On Delivery</span>
             </div>
-        </section>
-
-        <!-- 5. Deals of the Day (Horizontal Scroll on Mobile, Grid on Desktop) -->
-        <section class="bg-white p-4 md:p-6 rounded-xl shadow-lg">
-             <h2 class="text-xl md:text-2xl font-bold mb-4 text-gray-900 border-b pb-2 flex items-center space-x-2">
-                <span data-lucide="clock" class="w-6 h-6 text-red-500"></span>
-                <span>Deals of the Day</span>
-            </h2>
-            <div class="flex overflow-x-auto space-x-4 pb-4 md:grid md:grid-cols-4 md:space-x-0 md:gap-6">
-                
-                <div class="product-card flex-shrink-0 w-48 md:w-full bg-white rounded-lg overflow-hidden border border-gray-100 shadow-md cursor-pointer">
-                    <div class="h-32 bg-red-50 flex items-center justify-center">
-                        <img src="https://placehold.co/150x150/dc2626/ffffff?text=PowerBank" alt="Deal 1" class="max-h-full max-w-full object-contain p-2">
-                    </div>
-                    <div class="p-3">
-                        <h3 class="text-base font-semibold truncate text-gray-800" title="20000mAh Power Bank">20000mAh Power Bank</h3>
-                        <p class="text-sm text-green-600 font-bold mt-1">Flat ₹500 Off</p>
-                        <p class="text-xs text-red-500 font-medium">Ends in 03:45:22</p>
-                    </div>
-                </div>
-                
-                <div class="product-card flex-shrink-0 w-48 md:w-full bg-white rounded-lg overflow-hidden border border-gray-100 shadow-md cursor-pointer">
-                    <div class="h-32 bg-yellow-50 flex items-center justify-center">
-                        <img src="https://placehold.co/150x150/facc15/ffffff?text=Keyboard" alt="Deal 2" class="max-h-full max-w-full object-contain p-2">
-                    </div>
-                    <div class="p-3">
-                        <h3 class="text-base font-semibold truncate text-gray-800" title="Mechanical Gaming Keyboard">Gaming Keyboard</h3>
-                        <p class="text-sm text-green-600 font-bold mt-1">Buy 1 Get 1 Free</p>
-                        <p class="text-xs text-red-500 font-medium">Ends in 03:45:22</p>
-                    </div>
-                </div>
-                
-                <div class="product-card flex-shrink-0 w-48 md:w-full bg-white rounded-lg overflow-hidden border border-gray-100 shadow-md cursor-pointer">
-                    <div class="h-32 bg-green-50 flex items-center justify-center">
-                        <img src="https://placehold.co/150x150/16a34a/ffffff?text=Tshirt" alt="Deal 3" class="max-h-full max-w-full object-contain p-2">
-                    </div>
-                    <div class="p-3">
-                        <h3 class="text-base font-semibold truncate text-gray-800" title="Men's Casual T-Shirts">Men's Casual T-Shirts</h3>
-                        <p class="text-sm text-green-600 font-bold mt-1">Min. 40% Off</p>
-                        <p class="text-xs text-red-500 font-medium">Ends in 03:45:22</p>
-                    </div>
-                </div>
-                
-                <div class="product-card flex-shrink-0 w-48 md:w-full bg-white rounded-lg overflow-hidden border border-gray-100 shadow-md cursor-pointer">
-                    <div class="h-32 bg-blue-50 flex items-center justify-center">
-                        <img src="https://placehold.co/150x150/2563eb/ffffff?text=Shoes" alt="Deal 4" class="max-h-full max-w-full object-contain p-2">
-                    </div>
-                    <div class="p-3">
-                        <h3 class="text-base font-semibold truncate text-gray-800" title="Sports Running Shoes">Sports Running Shoes</h3>
-                        <p class="text-sm text-green-600 font-bold mt-1">Under ₹999</p>
-                        <p class="text-xs text-red-500 font-medium">Ends in 03:45:22</p>
-                    </div>
-                </div>
+            <div class="feature-box">
+                <i class="fas fa-shield-halved"></i>
+                <span>1 Year Warranty</span>
             </div>
-        </section>
-
-        <!-- 6. Featured Categories (Simple Grid) -->
-        <section class="p-4 md:p-6 mb-10">
-            <h2 class="text-xl md:text-2xl font-bold mb-4 text-gray-900 border-b pb-2">Shop by Category</h2>
-            <div class="grid grid-cols-3 md:grid-cols-6 gap-4 text-center">
-                <div class="bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer">
-                    <span data-lucide="headphones" class="w-8 h-8 mx-auto text-blue-600 mb-2"></span>
-                    <p class="text-sm font-medium">Audio</p>
-                </div>
-                 <div class="bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer">
-                    <span data-lucide="smartphone" class="w-8 h-8 mx-auto text-green-600 mb-2"></span>
-                    <p class="text-sm font-medium">Mobiles</p>
-                </div>
-                 <div class="bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer">
-                    <span data-lucide="shirt" class="w-8 h-8 mx-auto text-red-600 mb-2"></span>
-                    <p class="text-sm font-medium">Clothing</p>
-                </div>
-                 <div class="bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer">
-                    <span data-lucide="gem" class="w-8 h-8 mx-auto text-yellow-600 mb-2"></span>
-                    <p class="text-sm font-medium">Jewellery</p>
-                </div>
-                 <div class="bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer hidden sm:block">
-                    <span data-lucide="gamepad" class="w-8 h-8 mx-auto text-purple-600 mb-2"></span>
-                    <p class="text-sm font-medium">Gaming</p>
-                </div>
-                 <div class="bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition cursor-pointer hidden sm:block">
-                    <span data-lucide="book-open" class="w-8 h-8 mx-auto text-teal-600 mb-2"></span>
-                    <p class="text-sm font-medium">Books</p>
-                </div>
-            </div>
-        </section>
-    </main>
-    
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white mt-8 p-6">
-        <div class="max-w-7xl mx-auto text-center text-sm">
-            &copy; 2025 ATM Mart. All rights reserved. | <a href="#" class="text-blue-400 hover:underline">Privacy Policy</a>
         </div>
-    </footer>
+    </section>
 
-
-    <!-- --- Firebase Login/Auth Modal --- -->
-    <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden flex items-center justify-center p-4" onclick="window.toggleAuthModal(false)">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm transform transition-all duration-300" onclick="event.stopPropagation()">
+    <section class="products-section">
+        <div class="container">
+            <h2 class="section-title">Trending Now <i class="fas fa-fire" style="color:red;"></i></h2>
             
-            <button onclick="window.toggleAuthModal(false)" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
-                <span data-lucide="x" class="w-6 h-6"></span>
-            </button>
+            <div id="product-grid" class="product-grid">
+                <p style="text-align:center; width:100%; padding:20px;">Loading Premium Products...</p>
+            </div>
+        </div>
+    </section>
 
-            <h2 class="text-2xl font-bold mb-4 text-gray-900">Sign in to ATM Mart</h2>
-
-            <div id="auth-error-message" class="mb-4 text-center text-red-500 text-sm hidden font-medium"></div>
+    <div id="product-modal" class="modal">
+        <div class="modal-content product-modal-content">
+            <span class="close-btn" onclick="closeProductModal()">&times;</span>
             
-            <!-- Google Login Button -->
-            <button onclick="window.handleGoogleLogin()" 
-                    class="w-full bg-blue-600 text-white py-3 mb-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 transition duration-150 ease-in-out flex items-center justify-center space-x-2">
-                <span data-lucide="mail" class="w-5 h-5"></span>
-                <span>Continue with Google</span>
-            </button>
+            <div class="product-view-layout">
+                <div class="gallery-section">
+                    <img id="main-view-img" src="" alt="Main Product">
+                    <div class="thumbnail-row" id="thumbnail-container">
+                        </div>
+                </div>
 
-            <!-- Logout Section (Only visible when logged in) -->
-            <div id="logout-section" class="mt-4 pt-4 border-t hidden">
-                <button onclick="window.handleLogout()" 
-                        class="w-full bg-red-500 text-white py-2 rounded-lg font-semibold shadow-md hover:bg-red-600 transition duration-150 ease-in-out flex items-center justify-center space-x-2">
-                    <span data-lucide="log-out" class="w-5 h-5"></span>
-                    <span>Logout</span>
-                </button>
+                <div class="details-section">
+                    <h2 id="modal-title" class="modal-title">Product Name</h2>
+                    
+                    <div class="rating-badge">
+                        <i class="fas fa-star"></i> 4.8 <span style="color:#777; font-weight:normal;">(Verified Purchase)</span>
+                    </div>
+                    
+                    <div class="price-area">
+                        <span id="modal-price" class="big-price">₹0</span>
+                        <span id="modal-old-price" class="old-price">₹0</span>
+                        <span class="discount-tag">HOT DEAL</span>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <p id="modal-desc" class="product-desc">Description loading...</p>
+
+                    <div class="color-selection">
+                        <p><strong>Select Color:</strong> <span id="selected-color-name" style="color:#555;"></span></p>
+                        <div id="color-options" class="color-options">
+                            </div>
+                    </div>
+
+                    <div class="review-gallery">
+                        <p><strong>Customer Photos:</strong></p>
+                        <div class="review-imgs">
+                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=100&q=80" alt="Review 1">
+                            <img src="https://images.unsplash.com/photo-1593642532744-d377ab507dc8?auto=format&fit=crop&w=100&q=80" alt="Review 2">
+                            <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=100&q=80" alt="Review 3">
+                            <span style="font-size:0.8rem; align-self:center; color:#555;">+120 more</span>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="btn-buy-now" onclick="buyNowFromModal()">
+                            <i class="fas fa-bolt"></i> Buy Now (Cash On Delivery)
+                        </button>
+                    </div>
+                    <p style="text-align:center; font-size:0.7rem; color:green; margin-top:5px;">
+                        <i class="fas fa-check-circle"></i> In Stock & Ready to Ship
+                    </p>
+                </div>
             </div>
         </div>
     </div>
+
+    <div id="cart-modal" class="modal">
+        <div class="modal-content cart-content">
+            <div class="cart-header">
+                <h2><i class="fas fa-lock"></i> Secure Checkout</h2>
+                <span class="close-btn" onclick="toggleCart()">&times;</span>
+            </div>
+            
+            <div id="cart-items" class="cart-items">
+                </div>
+            
+            <div class="cart-footer">
+                <div class="total-row">
+                    <span>Total To Pay (COD):</span>
+                    <span id="cart-total">₹0</span>
+                </div>
+                
+                <form id="checkout-form">
+                    <h4 style="margin-bottom:10px; margin-top:15px;">Shipping Address</h4>
+                    
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="cust-name" placeholder="Full Name" required>
+                    </div>
+
+                    <div class="input-group">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" id="cust-phone" placeholder="Mobile Number" pattern="[0-9]{10}" title="10 Digit Mobile Number" required>
+                    </div>
+
+                    <div class="input-group">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <textarea id="cust-address" placeholder="Full Address (House No, Area, City, Pincode)" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn-checkout">
+                        Confirm Order
+                    </button>
+                    <p style="text-align:center; font-size:0.7rem; margin-top:5px; color:#555;">
+                        We will call you to confirm the order.
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer style="text-align:center; padding:20px; color:#777; font-size:0.8rem;">
+        <p>&copy; 2025 Anuj Tech Mart. All Rights Reserved.</p>
+    </footer>
+
+    <script type="module" src="script.js"></script>
+
 </body>
 </html>
