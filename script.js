@@ -30,14 +30,21 @@ const products = [
         name: "Ultra Watch Series 9 (AMOLED)",
         price: 2499,
         oldPrice: 8999,
-        desc: "Experience the ultimate smart wearable. Features a 2.0-inch infinite display, Bluetooth calling, health tracking (SpO2, Heart Rate), and 5-day battery life.",
+        desc: "Experience the ultimate smart wearable. Features a 2.0-inch infinite display, Bluetooth calling, health tracking (SpO2, Heart Rate), and 5-day battery life. IP68 Water Resistant.",
+        // Different images for different colors
+        colorImages: {
+            "Midnight Black": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80",
+            "Sunset Orange": "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&w=600&q=80",
+            "Starlight Silver": "https://images.unsplash.com/photo-1551816230-ef5deaed4a26?auto=format&fit=crop&w=600&q=80"
+        },
+        // Default Main Image
         mainImg: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80",
         gallery: [
             "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80",
             "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&w=600&q=80",
             "https://images.unsplash.com/photo-1551816230-ef5deaed4a26?auto=format&fit=crop&w=600&q=80"
         ],
-        colors: ["#000000", "#ff7f50", "#c0c0c0"], // Black, Orange, Silver
+        colors: ["#000000", "#ff7f50", "#c0c0c0"],
         colorNames: ["Midnight Black", "Sunset Orange", "Starlight Silver"]
     },
     {
@@ -45,7 +52,11 @@ const products = [
         name: "Pro ANC Wireless Earbuds",
         price: 1299,
         oldPrice: 3999,
-        desc: "Immerse yourself in music with Active Noise Cancellation. Transparency mode, sweat resistance, and 30-hour playback with the case.",
+        desc: "Immerse yourself in music with Active Noise Cancellation. Transparency mode, sweat resistance, and 30-hour playback with the case. 10mm Drivers for deep bass.",
+        colorImages: {
+            "Pure White": "https://images.unsplash.com/photo-1603351154351-5cf99bc75403?auto=format&fit=crop&w=600&q=80",
+            "Matte Black": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=600&q=80"
+        },
         mainImg: "https://images.unsplash.com/photo-1603351154351-5cf99bc75403?auto=format&fit=crop&w=600&q=80",
         gallery: [
             "https://images.unsplash.com/photo-1603351154351-5cf99bc75403?auto=format&fit=crop&w=600&q=80",
@@ -60,7 +71,11 @@ const products = [
         name: "RGB Mechanical Keyboard",
         price: 1899,
         oldPrice: 4500,
-        desc: "Pro-level gaming keyboard with blue mechanical switches. Customizable RGB lighting effects and durable aluminum build.",
+        desc: "Pro-level gaming keyboard with blue mechanical switches. Customizable RGB lighting effects and durable aluminum build. Anti-ghosting keys.",
+        colorImages: {
+             "Black Base": "https://images.unsplash.com/photo-1587829741301-dc798b91a603?auto=format&fit=crop&w=600&q=80",
+             "White Base": "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&w=600&q=80"
+        },
         mainImg: "https://images.unsplash.com/photo-1587829741301-dc798b91a603?auto=format&fit=crop&w=600&q=80",
         gallery: [
             "https://images.unsplash.com/photo-1587829741301-dc798b91a603?auto=format&fit=crop&w=600&q=80",
@@ -75,7 +90,11 @@ const products = [
         name: "Sony Style Over-Ear Headphones",
         price: 999,
         oldPrice: 2499,
-        desc: "Deep Bass sound profile. Comfortable ear cushions for long listening sessions. Bluetooth 5.0 connectivity.",
+        desc: "Deep Bass sound profile. Comfortable ear cushions for long listening sessions. Bluetooth 5.0 connectivity and built-in microphone.",
+        colorImages: {
+            "Black": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
+            "Blue": "https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=600&q=80"
+        },
         mainImg: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
         gallery: [
             "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
@@ -97,17 +116,35 @@ let selectedColorName = "";
 // ==========================================
 
 // --- Initialize Page ---
-window.onload = function() {
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("App Started...");
     renderProductGrid();
-};
+    // Initialize Swiper Carousel
+    var swiper = new Swiper(".mySwiper", {
+        spaceBetween: 0,
+        centeredSlides: true,
+        autoplay: {
+          delay: 3500,
+          disableOnInteraction: false,
+        },
+        pagination: {
+          el: ".swiper-pagination",
+          clickable: true,
+        },
+        navigation: {
+          nextEl: ".swiper-button-next",
+          prevEl: ".swiper-button-prev",
+        },
+      });
+});
 
 // --- Render Grid ---
 function renderProductGrid() {
     const grid = document.getElementById("product-grid");
+    if (!grid) return;
+
     grid.innerHTML = products.map(product => {
-        // Calculate discount
         const discount = Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100);
-        
         return `
         <div class="product-card" onclick="openProductModal(${product.id})">
             <img src="${product.mainImg}" alt="${product.name}" class="product-img">
@@ -128,29 +165,26 @@ function renderProductGrid() {
 // --- Open Modal Logic ---
 window.openProductModal = function(id) {
     currentProduct = products.find(p => p.id === id);
-    
-    // Default to first color
     selectedColorName = currentProduct.colorNames[0];
 
-    // Populate Data
+    // Text Data
     document.getElementById("modal-title").innerText = currentProduct.name;
     document.getElementById("modal-price").innerText = "₹" + currentProduct.price;
     document.getElementById("modal-old-price").innerText = "₹" + currentProduct.oldPrice;
     document.getElementById("modal-desc").innerText = currentProduct.desc;
     document.getElementById("selected-color-name").innerText = selectedColorName;
 
-    // Set Main Image
-    document.getElementById("main-view-img").src = currentProduct.mainImg;
+    // Image Data (Use the image corresponding to the default color)
+    document.getElementById("main-view-img").src = currentProduct.colorImages[selectedColorName];
 
-    // Generate Thumbnails
+    // Thumbnails
     const thumbContainer = document.getElementById("thumbnail-container");
     thumbContainer.innerHTML = currentProduct.gallery.map(img => 
         `<img src="${img}" class="thumb-img" onclick="changeMainImg('${img}', this)">`
     ).join("");
-    // Highlight first thumbnail
     if(thumbContainer.firstChild) thumbContainer.firstChild.classList.add("active-thumb");
 
-    // Generate Colors
+    // Colors
     const colorContainer = document.getElementById("color-options");
     colorContainer.innerHTML = currentProduct.colors.map((colorCode, index) => 
         `<div class="color-circle" 
@@ -159,10 +193,8 @@ window.openProductModal = function(id) {
               title="${currentProduct.colorNames[index]}">
          </div>`
     ).join("");
-    // Highlight first color
     if(colorContainer.firstChild) colorContainer.firstChild.classList.add("selected");
 
-    // Show Modal
     document.getElementById("product-modal").style.display = "flex";
 };
 
@@ -174,41 +206,47 @@ window.closeProductModal = function() {
 // --- Gallery Interaction ---
 window.changeMainImg = function(src, element) {
     document.getElementById("main-view-img").src = src;
-    
-    // Update active class
     document.querySelectorAll(".thumb-img").forEach(img => img.classList.remove("active-thumb"));
     element.classList.add("active-thumb");
 };
 
-// --- Color Selection ---
+// --- Color Selection (Updates Main Image) ---
 window.selectColor = function(element, name) {
     selectedColorName = name;
     document.getElementById("selected-color-name").innerText = name;
-    
-    // Update visuals
     document.querySelectorAll(".color-circle").forEach(c => c.classList.remove("selected"));
     element.classList.add("selected");
+
+    // Change main image based on selected color
+    if (currentProduct.colorImages && currentProduct.colorImages[name]) {
+        document.getElementById("main-view-img").src = currentProduct.colorImages[name];
+        // Reset active thumbnail
+        document.querySelectorAll(".thumb-img").forEach(img => img.classList.remove("active-thumb"));
+    }
 };
 
-// --- Buy Now (Direct to Checkout) ---
+// --- Buy Now ---
 window.buyNowFromModal = function() {
-    // Add single item to cart state for checkout
-    cart = [{
-        ...currentProduct,
-        selectedColor: selectedColorName
-    }];
-    
+    cart = [{ ...currentProduct, selectedColor: selectedColorName, 
+              // Ensure cart uses the correct image for the selected color
+              mainImg: currentProduct.colorImages[selectedColorName] 
+            }];
     updateCartUI();
     closeProductModal();
-    toggleCart(); // Open Checkout Modal
+    toggleCart();
 };
 
-// --- Toggle Checkout/Cart Modal ---
+// --- Toggle Cart ---
 window.toggleCart = function() {
     const modal = document.getElementById("cart-modal");
     modal.style.display = (modal.style.display === "flex") ? "none" : "flex";
     updateCartUI();
 };
+
+// Scroll function for Hero buttons
+window.scrollToProducts = function() {
+    document.getElementById("products").scrollIntoView({behavior: 'smooth'});
+}
 
 // --- Update Cart UI ---
 function updateCartUI() {
@@ -217,7 +255,6 @@ function updateCartUI() {
     const countEl = document.getElementById("cart-count");
     
     let total = 0;
-    
     if (cart.length === 0) {
         list.innerHTML = "<p style='text-align:center; padding:20px; color:#777;'>Cart is empty.</p>";
     } else {
@@ -226,47 +263,47 @@ function updateCartUI() {
             return `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <img src="${item.mainImg}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;">
+                    <img src="${item.mainImg}" style="width:60px; height:60px; object-fit:cover; border-radius:4px; border:1px solid #eee;">
                     <div>
-                        <div style="font-weight:bold; font-size:0.9rem;">${item.name}</div>
-                        <div style="font-size:0.8rem; color:#555;">Color: ${item.selectedColor}</div>
+                        <div style="font-weight:bold; font-size:0.95rem; color:#111;">${item.name}</div>
+                        <div style="font-size:0.85rem; color:#555;">Color: ${item.selectedColor}</div>
                     </div>
                 </div>
-                <div style="font-weight:bold;">₹${item.price}</div>
+                <div style="font-weight:800; font-size:1.1rem;">₹${item.price}</div>
             </div>`;
         }).join("");
     }
-
     totalEl.innerText = "₹" + total;
     countEl.innerText = cart.length;
 }
 
 // ==========================================
-// 4. FIREBASE ORDER SUBMISSION
+// 4. FIREBASE ORDER SUBMISSION (INSTANT)
 // ==========================================
 const checkoutForm = document.getElementById("checkout-form");
 
 if (checkoutForm) {
     checkoutForm.addEventListener("submit", async (e) => {
-        e.preventDefault(); // Stop page reload
+        e.preventDefault();
 
         if (cart.length === 0) {
             alert("Your cart is empty.");
             return;
         }
 
-        // UX: Change Button Text
         const btn = document.querySelector(".btn-checkout");
         const originalText = btn.innerText;
+        
+        // 1. Instant UI Feedback
         btn.innerText = "Placing Order...";
         btn.disabled = true;
+        btn.style.opacity = "0.7";
 
-        // Collect Data
         const orderData = {
             customerName: document.getElementById("cust-name").value,
             customerPhone: document.getElementById("cust-phone").value,
             customerAddress: document.getElementById("cust-address").value,
-            items: cart, // Contains product details + color
+            items: cart,
             totalAmount: document.getElementById("cart-total").innerText,
             paymentMode: "COD",
             orderDate: new Date().toISOString(),
@@ -274,26 +311,26 @@ if (checkoutForm) {
         };
 
         try {
-            // Write to Firestore
+            // 2. Firebase Call (Happens in background while UI shows processing)
             const docRef = await addDoc(collection(db, "orders"), orderData);
             console.log("Order written with ID: ", docRef.id);
 
-            // Success Feedback
-            alert(`✅ Order Placed Successfully! \n\nWe have received your request for: \n${cart[0].name} (${cart[0].selectedColor}) \n\nWe will call you at ${orderData.customerPhone} shortly.`);
+            // 3. Success Action (Immediate after Firebase confirms)
+            alert(`✅ Order Placed Successfully!\n\nOrder ID: ${docRef.id}\n\nWe will call you at ${orderData.customerPhone} shortly to confirm.`);
             
-            // Cleanup
             cart = [];
             updateCartUI();
-            toggleCart(); // Close modal
+            toggleCart();
             checkoutForm.reset();
 
         } catch (error) {
             console.error("Error adding order: ", error);
             alert("⚠️ Network Error. Please check your connection and try again.");
         } finally {
-            // Reset Button
+            // Reset Button State
             btn.innerText = originalText;
             btn.disabled = false;
+             btn.style.opacity = "1";
         }
     });
 }
