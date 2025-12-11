@@ -29,13 +29,11 @@ const products = [
         price: 2499,
         oldPrice: 8999,
         desc: "100% Authentic Unit. AMOLED Display, Bluetooth Calling, 45mm Dial. Comes with Brand Warranty card inside box. IP68 Water Resistant.",
-        // Different images for specific colors
         colorImages: {
             "Midnight Black": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80",
             "Sunset Orange": "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&w=600&q=80",
             "Starlight Silver": "https://images.unsplash.com/photo-1551816230-ef5deaed4a26?auto=format&fit=crop&w=600&q=80"
         },
-        // Default Main Image
         mainImg: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80",
         gallery: [
             "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=600&q=80",
@@ -127,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
             },
         });
     } catch (e) {
-        console.log("Swiper not loaded yet", e);
+        console.log("Swiper loading...", e);
     }
 });
 
@@ -135,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // 4. DISPLAY FUNCTIONS
 // ==========================================
 
-// Render the Product Grid
+// Render Product Grid
 function renderProductGrid() {
     const grid = document.getElementById("product-grid");
     if(!grid) return;
@@ -160,7 +158,7 @@ function renderProductGrid() {
 }
 
 // ==========================================
-// 5. GLOBAL WINDOW FUNCTIONS (For HTML OnClick)
+// 5. GLOBAL WINDOW FUNCTIONS
 // ==========================================
 
 // --- Open Product Popup ---
@@ -226,20 +224,19 @@ window.selectColor = function(element, name) {
     }
 };
 
-// --- Buy Now Button (Adds to Cart & Opens Checkout) ---
+// --- Buy Now Button ---
 window.buyNowFromModal = function() {
     cart = [{
         ...currentProduct,
         selectedColor: selectedColorName,
-        mainImg: currentProduct.colorImages[selectedColorName] // Ensure correct image in cart
+        mainImg: currentProduct.colorImages[selectedColorName]
     }];
-    
     updateCartUI();
     closeProductModal();
     toggleCart(); // Open Cart Modal
 };
 
-// --- Toggle Cart Modal ---
+// --- Toggle Cart Modal & Update Dates ---
 window.toggleCart = function() {
     const modal = document.getElementById("cart-modal");
     
@@ -247,9 +244,28 @@ window.toggleCart = function() {
         modal.style.display = "none";
     } else {
         modal.style.display = "flex";
-        // Reset to Checkout View every time opened
+        // Reset View
         document.getElementById("checkout-view").style.display = "block";
         document.getElementById("success-view").style.display = "none";
+        
+        // --- Calculate Dates ---
+        const today = new Date();
+        const deliveryDate = new Date();
+        deliveryDate.setDate(today.getDate() + 3); // 3 Days later
+
+        // Date Format: "Mon, 12 Oct"
+        const options = { weekday: 'short', day: 'numeric', month: 'short' };
+        
+        // Update Cart Text
+        document.getElementById("delivery-date-text").innerText = 
+            `Free Delivery by ${deliveryDate.toLocaleDateString('en-US', options)}`;
+        
+        // Update Tracking Timeline
+        document.getElementById("track-date-today").innerText = 
+            today.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+        
+        document.getElementById("track-date-delivery").innerText = 
+            deliveryDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
     }
 };
 
@@ -258,7 +274,7 @@ window.scrollToProducts = function() {
     document.getElementById("products").scrollIntoView({behavior: 'smooth'});
 };
 
-// --- Internal: Update Cart HTML ---
+// --- Update Cart HTML ---
 function updateCartUI() {
     const list = document.getElementById("cart-items");
     const totalEl = document.getElementById("cart-total");
@@ -267,7 +283,7 @@ function updateCartUI() {
     let total = 0;
     
     if (cart.length === 0) {
-        list.innerHTML = "<p style='text-align:center; color:#777;'>Cart is empty.</p>";
+        list.innerHTML = "<p style='text-align:center; color:#777; padding:20px;'>Cart is empty.</p>";
     } else {
         list.innerHTML = cart.map(item => {
             total += item.price;
@@ -298,17 +314,20 @@ if (checkoutForm) {
         e.preventDefault(); // Stop Page Reload
 
         if (cart.length === 0) {
-            alert("Your cart is empty.");
+            alert("Cart is empty.");
             return;
         }
 
-        // --- OPTIMISTIC UI: INSTANT SUCCESS ---
-        // Hide Form, Show Success immediately
+        // --- 1. INSTANT SUCCESS (Optimistic UI) ---
         document.getElementById("checkout-view").style.display = "none";
         document.getElementById("success-view").style.display = "block";
         document.getElementById("success-order-id").innerText = "Generating ID..."; // Placeholder
 
-        // Collect Data
+        // --- 2. Calculate Delivery Date for Backend ---
+        const deliveryDate = new Date();
+        deliveryDate.setDate(deliveryDate.getDate() + 3);
+
+        // --- 3. Prepare Data ---
         const orderData = {
             customerName: document.getElementById("cust-name").value,
             customerPhone: document.getElementById("cust-phone").value,
@@ -317,25 +336,25 @@ if (checkoutForm) {
             totalAmount: document.getElementById("cart-total").innerText,
             paymentMode: "COD",
             orderDate: new Date().toISOString(),
-            status: "New Order"
+            expectedDelivery: deliveryDate.toDateString(),
+            status: "Order Placed"
         };
 
-        // Send to Firebase in Background
+        // --- 4. Send to Firebase (Background) ---
         try {
             const docRef = await addDoc(collection(db, "orders"), orderData);
-            // Update with Real ID once available
-            document.getElementById("success-order-id").innerText = docRef.id;
-            console.log("Order Saved:", docRef.id);
             
-            // Clear Data
+            // Update UI with real ID
+            document.getElementById("success-order-id").innerText = docRef.id;
+            console.log("Order Synced:", docRef.id);
+            
+            // Clear Cart Data
             cart = [];
             document.getElementById("cart-count").innerText = "0";
             checkoutForm.reset();
 
         } catch (error) {
             console.error("Order Error:", error);
-            // In rare case of error, you might want to alert user, 
-            // but for 'Tech Giant' feel, we assume success or handle silently/retry.
             document.getElementById("success-order-id").innerText = "Offline-Pending";
         }
     });
