@@ -116,7 +116,8 @@
                     <i class="fab fa-cc-visa"></i>
                     <i class="fab fa-cc-mastercard"></i>
                     <i class="fab fa-google-pay"></i>
-                    <i class="fas fa-money-bill-wave"></i> </div>
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
             </div>
         </div>
         <div class="footer-bottom">
@@ -187,6 +188,11 @@
                 <div id="cart-items" class="cart-items"></div>
                 
                 <div class="cart-footer">
+                    <div class="delivery-estimate-box">
+                        <i class="fas fa-truck-fast"></i>
+                        <span id="delivery-date-text">Estimating...</span>
+                    </div>
+
                     <div class="total-row">
                         <span>Total (COD):</span>
                         <span id="cart-total">₹0</span>
@@ -204,15 +210,41 @@
                 </div>
             </div>
 
-            <div id="success-view" style="display:none; text-align:center; padding:40px 20px;">
-                <i class="fas fa-check-circle" style="font-size: 5rem; color: #007600; margin-bottom: 20px;"></i>
-                <h2 style="color:#333;">Order Placed!</h2>
-                <p style="color:#555; margin-bottom:20px;">Thank you for shopping with us.</p>
-                <div style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:20px;">
-                    <p><strong>Order ID:</strong> <span id="success-order-id">Loading...</span></p>
-                    <p>We will call you shortly to confirm.</p>
+            <div id="success-view" style="display:none;">
+                <div class="success-icon-area">
+                    <i class="fas fa-check-circle pulse-icon"></i>
                 </div>
-                <button onclick="toggleCart()" class="btn-primary" style="width:100%;">Continue Shopping</button>
+                <h2>Order Placed Successfully!</h2>
+                <p class="order-id-text">Order ID: <span id="success-order-id">Generating...</span></p>
+
+                <div class="tracking-container">
+                    <h3>Live Tracking Status</h3>
+                    <div class="track-step active">
+                        <div class="step-icon"><i class="fas fa-clipboard-check"></i></div>
+                        <div class="step-text">
+                            <strong>Order Confirmed</strong>
+                            <span id="track-date-today">Today</span>
+                        </div>
+                    </div>
+                    <div class="track-line"></div>
+                    <div class="track-step">
+                        <div class="step-icon"><i class="fas fa-box"></i></div>
+                        <div class="step-text">
+                            <strong>Shipped</strong>
+                            <span>Tomorrow</span>
+                        </div>
+                    </div>
+                    <div class="track-line"></div>
+                    <div class="track-step">
+                        <div class="step-icon"><i class="fas fa-shipping-fast"></i></div>
+                        <div class="step-text">
+                            <strong>Out for Delivery</strong>
+                            <span id="track-date-delivery">In 3 Days</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="toggleCart()" class="btn-primary" style="width:100%; margin-top:20px;">Continue Shopping</button>
             </div>
 
         </div>
